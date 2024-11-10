@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import InputBox from "../components/input.component";
 import googleIcon from "../imgs/google.png";
 import AnimationWrapper from "../common/page-animation";
@@ -6,10 +6,17 @@ import AnimationWrapper from "../common/page-animation";
 import { Toaster, toast } from "react-hot-toast";
 import axios from "axios";
 import { storeInSession } from "../common/session";
+import { useContext } from "react";
+import { UserContext } from "../App";
 
 const UserAuthForm = ({ type }) => {
-  // hook ref
+  // hook
   // const authForm = useRef();
+
+  let {
+    userAuth: { access_token },
+    setUserAuth,
+  } = useContext(UserContext);
 
   // fungsi auth pengguna melalui server
   const userAuthThroughServer = (serverRoute, formData) => {
@@ -17,7 +24,7 @@ const UserAuthForm = ({ type }) => {
       .post(import.meta.env.VITE_SERVER_DOMAIN + serverRoute, formData)
       .then(({ data }) => {
         storeInSession("user", JSON.stringify(data));
-        console.log(sessionStorage);
+        setUserAuth(data);
       })
       .catch(({ response }) => {
         toast.error(response.data.error);
@@ -36,7 +43,7 @@ const UserAuthForm = ({ type }) => {
     let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex untuk password
 
     // ambil data dari form
-    let form = new FormData(formElement);
+    let form = new FormData(authForm);
     let formData = {};
 
     for (let [key, value] of form.entries()) {
@@ -72,11 +79,13 @@ const UserAuthForm = ({ type }) => {
     userAuthThroughServer(serverRoute, formData);
   };
 
-  return (
+  return access_token ? (
+    <Navigate to="/" />
+  ) : (
     <AnimationWrapper keyValue={type}>
       <section className="h-cover flex items-center justify-center">
         <Toaster />
-        <form action="" className="w-[80%] max-w-[400px]" id="formElement">
+        <form action="" className="w-[80%] max-w-[400px]" id="authForm">
           <h1 className="text-3xl font-gelasio capitalize text-center mb-24">
             {type == "sign-in" ? "Selemat Datang Kembali!" : "Gabung Sekarang!"}
           </h1>
