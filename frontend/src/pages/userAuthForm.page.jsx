@@ -2,12 +2,81 @@ import { Link } from "react-router-dom";
 import InputBox from "../components/input.component";
 import googleIcon from "../imgs/google.png";
 import AnimationWrapper from "../common/page-animation";
+// import { useRef } from "react";
+import { Toaster, toast } from "react-hot-toast";
+import axios from "axios";
+import { storeInSession } from "../common/session";
 
 const UserAuthForm = ({ type }) => {
+  // hook ref
+  // const authForm = useRef();
+
+  // fungsi auth pengguna melalui server
+  const userAuthThroughServer = (serverRoute, formData) => {
+    axios
+      .post(import.meta.env.VITE_SERVER_DOMAIN + serverRoute, formData)
+      .then(({ data }) => {
+        storeInSession("user", JSON.stringify(data));
+        console.log(sessionStorage);
+      })
+      .catch(({ response }) => {
+        toast.error(response.data.error);
+      });
+  };
+
+  // fungsi untuk handle submit
+  const handleSubmit = (event) => {
+    // mencegah aksi default bawaan browser
+    event.preventDefault();
+
+    const serverRoute = type === "sign-in" ? "/signin" : "/signup";
+
+    // regex
+    let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex untuk email
+    let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex untuk password
+
+    // ambil data dari form
+    let form = new FormData(formElement);
+    let formData = {};
+
+    for (let [key, value] of form.entries()) {
+      formData[key] = value;
+    }
+
+    let { fullname, email, password } = formData;
+    // form validasi untuk signup
+    if (fullname) {
+      if (fullname.length < 3) {
+        return toast.error("Nama lengkap harus minimal 3 karakter");
+      }
+    }
+
+    // Validasi email
+    if (!email.length) {
+      return toast.error("Email Tidak Boleh Kosong!");
+    }
+
+    // Validasi email berdasarkan regex
+    if (!emailRegex.test(email)) {
+      return toast.error("Email Tidak Valid!");
+    }
+
+    // Validasi password berdasarkan regex
+    if (!passwordRegex.test(password)) {
+      return toast.error(
+        "Password Harus Minimal 6 - 20 Karakter! Dengan Huruf Besar, Huruf Kecil, dan Angka!"
+      );
+    }
+
+    // memanggil auth pengguna melalui server
+    userAuthThroughServer(serverRoute, formData);
+  };
+
   return (
     <AnimationWrapper keyValue={type}>
       <section className="h-cover flex items-center justify-center">
-        <form action="" className="w-[80%] max-w-[400px]">
+        <Toaster />
+        <form action="" className="w-[80%] max-w-[400px]" id="formElement">
           <h1 className="text-3xl font-gelasio capitalize text-center mb-24">
             {type == "sign-in" ? "Selemat Datang Kembali!" : "Gabung Sekarang!"}
           </h1>
@@ -43,7 +112,11 @@ const UserAuthForm = ({ type }) => {
           />
 
           {/* tombol daftar */}
-          <button className="btn-dark center mt-14" type="submit">
+          <button
+            className="btn-dark center mt-14"
+            type="submit"
+            onClick={handleSubmit}
+          >
             {type == "sign-in" ? "Masuk" : "Daftar"}
           </button>
 

@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import bcrypt, { compare } from "bcrypt";
 import { nanoid } from "nanoid";
 import jwt from "jsonwebtoken";
+import cors from "cors";
 import "dotenv/config";
 
 // import schema
@@ -16,6 +17,7 @@ let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex untuk pa
 
 // middleware
 app.use(expresss.json());
+app.use(cors());
 
 mongoose.connect(process.env.DB_LOCATION, {
   autoIndex: true,
