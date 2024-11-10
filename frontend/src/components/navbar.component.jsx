@@ -1,9 +1,29 @@
-import { useState } from "react";
-import logo from "../imgs/logo.png";
+import { useContext, useState } from "react";
 import { Link, Outlet } from "react-router-dom";
+import { UserContext } from "../App";
+import logo from "../imgs/logo.png";
+import UserNavigationPanel from "./user-navigation.component";
 
 const Navbar = () => {
   const [boxPencarian, setBoxPencarian] = useState(false);
+  const [userNavPanel, setUserNavPanel] = useState(false);
+
+  const {
+    userAuth,
+    userAuth: { access_token, profile_img },
+  } = useContext(UserContext);
+
+  // fungsi untuk handle user nav panel
+  const handleUserNavPanel = () => {
+    setUserNavPanel(!userNavPanel);
+  };
+
+  // fungsi untuk handle blur
+  const handleBlur = () => {
+    setTimeout(() => {
+      setBoxPencarian(false);
+    }, 200);
+  };
 
   return (
     <>
@@ -43,15 +63,44 @@ const Navbar = () => {
             <p>Buat Artikel</p>
           </Link>
 
-          {/* tombol masuk */}
-          <Link className="btn-dark py-2" to="/signin">
-            Masuk
-          </Link>
+          {access_token ? (
+            <>
+              {/* tombol notifikasi */}
+              <Link to="/dashboard/notification">
+                <button className="w-12 h-12 rounded-full bg-grey relative hover:bg-black/10">
+                  <i className="fi fi-rr-bell text-xl clock mt-1"></i>
+                </button>
+              </Link>
 
-          {/* tombol daftar */}
-          <Link className="btn-light py-2 hidden md:block" to="/signup">
-            Daftar
-          </Link>
+              {/* tombol profile */}
+              <div
+                className="relative"
+                onClick={handleUserNavPanel}
+                onBlur={handleBlur}
+              >
+                <button className="w-12 h-12 mt-1">
+                  <img
+                    src={profile_img}
+                    className="w-full h-full object-cover rounded-full "
+                  />
+                </button>
+
+                {userNavPanel ? <UserNavigationPanel /> : ""}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* tombol masuk */}
+              <Link className="btn-dark py-2" to="/signin">
+                Masuk
+              </Link>
+
+              {/* tombol daftar */}
+              <Link className="btn-light py-2 hidden md:block" to="/signup">
+                Daftar
+              </Link>
+            </>
+          )}
         </div>
       </nav>
       <Outlet />
