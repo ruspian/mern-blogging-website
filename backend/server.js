@@ -1,9 +1,12 @@
-import expresss from "express";
+import expresss, { json } from "express";
 import mongoose from "mongoose";
 import bcrypt, { compare } from "bcrypt";
 import { nanoid } from "nanoid";
 import jwt from "jsonwebtoken";
 import cors from "cors";
+import admin from "firebase-admin";
+import { getAuth } from "firebase-admin/auth";
+import serviceAccountKey from "./config/firebaseConfig.js";
 import "dotenv/config";
 
 // import schema
@@ -11,6 +14,11 @@ import User from "./Schema/User.js";
 
 const app = expresss();
 let PORT = 3000;
+
+// firebase admin
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccountKey),
+});
 
 let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex untuk email
 let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex untuk password
@@ -132,25 +140,94 @@ app.post("/signin", (req, res) => {
         return res.status(403).json({ error: "Email Tidak Ditemukan!" });
       }
 
-      // menyocokkan password dengan hasil hash untuk login
-      bcrypt.compare(password, user.personal_info.password, (err, result) => {
-        if (err) {
-          return res
-            .status(403)
-            .json({ error: "Kesalahan Saat Login, Coba Lagi!" });
-        }
+      if (!user.google_auth) {
+        // menyocokkan password dengan hasil hash untuk login
+        bcrypt.compare(password, user.personal_info.password, (err, result) => {
+          if (err) {
+            return res
+              .status(403)
+              .json({ error: "Kesalahan Saat Login, Coba Lagi!" });
+          }
 
-        //   validasi password
-        if (!result) {
-          return res.status(403).json({ error: "Password Salah!" });
-        } else {
-          return res.status(200).json(formatDataToSend(user));
-        }
-      });
+          //   validasi password
+          if (!result) {
+            return res.status(403).json({ error: "Password Salah!" });
+          } else {
+            return res.status(200).json(formatDataToSend(user));
+          }
+        });
+      } else {
+        return res.status(403).json({
+          error:
+            "Akun Sudah dibuat menggunakan Google. Silahkan masuk Dengan Google!",
+        });
+      }
     })
     .catch((err) => {
       console.log(err.message);
       return res.status(403).json({ error: err.message });
+    });
+});
+
+app.post("/google-auth", async (req, res) => {
+  let { access_token } = req.body;
+
+  getAuth()
+    .verifyIdToken(access_token)
+    .then(async (decodedUser) => {
+      let { email, name, picture } = decodedUser;
+
+      picture = picture.replace("s96-c", "s384-c");
+
+      let user = await User.findOne({ "personal_info.email": email })
+        .select(
+          "personal_info.fullname personal.info.username personal.info.profile_img google_auth"
+        )
+        .then((usr) => {
+          return usr || null;
+        })
+        .catch((err) => {
+          return res.status(500).json({ error: err.message });
+        });
+
+      if (user) {
+        // login
+        if (!user.google_auth) {
+          return res.status(403).json({
+            error:
+              "Email Ini Sudah Didaftarkan Tanpa Google. Silakan Masuk Dengan Kata Sandi Untuk Mengakses Akun",
+          });
+        }
+      } else {
+        // signup
+        let username = await generateUsername(email);
+
+        user = new User({
+          personal_info: {
+            fullname: name,
+            email,
+            username,
+          },
+          google_auth: true,
+        });
+
+        await user
+          .save()
+          .then((usr) => {
+            user = usr;
+          })
+          .catch((err) => {
+            return res.status(500).json({ error: err.message });
+          });
+      }
+
+      return res.status(200).json(formatDataToSend(user));
+    })
+    .catch((err) => {
+      return res.status(500).json({
+        error:
+          "Gagal mengautentikasi Anda dengan Google. Coba dengan akun Google lainnya",
+      });
     });
 });
 
