@@ -3,6 +3,7 @@ import Navbar from "./components/navbar.component";
 import UserAuthForm from "./pages/userAuthForm.page";
 import { createContext, useEffect, useState } from "react";
 import { lookInSession } from "./common/session";
+import EditorPage from "./pages/editor.pages";
 
 // membuat global context untuk mengelolah data
 export const UserContext = createContext({});
@@ -22,6 +23,7 @@ const App = () => {
   return (
     <UserContext.Provider value={{ userAuth, setUserAuth }}>
       <Routes>
+        <Route path="/editor" element={<EditorPage />} />
         <Route path="/" element={<Navbar />}>
           <Route path="signin" element={<UserAuthForm type="sign-in" />} />
           <Route path="signup" element={<UserAuthForm type="sign-up" />} />
