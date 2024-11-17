@@ -1,18 +1,21 @@
-import expresss, { json } from "express";
+import express from "express";
 import mongoose from "mongoose";
-import bcrypt, { compare } from "bcrypt";
+import bcrypt from "bcrypt";
 import { nanoid } from "nanoid";
 import jwt from "jsonwebtoken";
 import cors from "cors";
 import admin from "firebase-admin";
 import { getAuth } from "firebase-admin/auth";
 import serviceAccountKey from "./config/firebaseConfig.js";
+import multer from "multer";
+import path from "path";
 import "dotenv/config";
 
 // import schema
 import User from "./Schema/User.js";
+import Blog from "./Schema/Blog.js";
 
-const app = expresss();
+const app = express();
 let PORT = 3000;
 
 // firebase admin
@@ -24,13 +27,46 @@ let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex untuk
 let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex untuk password
 
 // middleware
-app.use(expresss.json());
-app.use(cors());
+app.use(express.json());
+app.use(
+  cors({
+    origin: "http://localhost:5173", // URL React app
+    credentials: true,
+  })
+);
+app.use("./uploads", express.static("uploads"));
 
+// koneksi ke database mongoodb
 mongoose.connect(process.env.DB_LOCATION, {
   autoIndex: true,
 });
 
+// Konfigurasi Multer
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploads/");
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+// Filter file yang diunggah
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Hanya file bertipe JPEG, PNG, atau JPG yang diperbolehkan"));
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: { fileSize: 2 * 1024 * 1024 }, // Maksimal 2MB
+});
 // format data yang dikirimkan
 const formatDataToSend = (user) => {
   // buat token
@@ -58,6 +94,39 @@ const generateUsername = async (email) => {
   isUsernameNotUnique ? (username += nanoid().substring(0, 5)) : "";
   return username;
 };
+
+// Route untuk unggah gambar (untuk postingan blog)
+app.post("/create-blog", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "File gambar tidak ditemukan" });
+    }
+
+    const { title, des, content, tags, draft } = req.body;
+
+    // Buat entri blog baru
+    const newBlog = new Blog({
+      blog_id: new mongoose.Types.ObjectId().toString(),
+      title,
+      banner: `/uploads/blogpost/${req.file.filename}`, // Menyimpan path gambar banner
+      des,
+      content: JSON.parse(content), // Menyimpan konten dalam format array atau JSON
+      tags: tags.split(","),
+      draft,
+      author: req.user._id, // Misalnya menggunakan id user yang login
+    });
+
+    await newBlog.save();
+
+    return res.status(200).json({
+      message: "Blog berhasil diupload",
+      blog: newBlog,
+    });
+  } catch (error) {
+    console.error("Error saat meng-upload blog:", error);
+    return res.status(500).json({ error: "Terjadi kesalahan pada server" });
+  }
+});
 
 // route
 app.post("/signup", (req, res) => {
