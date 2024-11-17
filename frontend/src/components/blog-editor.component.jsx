@@ -3,20 +3,19 @@ import logo from "../imgs/logo.png";
 import AnimationWrapper from "../common/page-animation";
 import defaultBanner from "../imgs/blog banner.png";
 // import axios from "axios";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
+import { EditorContext } from "../pages/editor.pages";
 
 const EditorFormComponent = () => {
-  // Deklarasikan state untuk menyimpan preview gambar
-  const [imagePreview, setImagePreview] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [blogData, setBlogData] = useState({
-    title: "",
-    des: "",
-    content: "",
-    tags: [],
-    draft: false,
-  });
+  // kontext editor
+  let {
+    blog,
+    blog: { title, banner, content, tags, des },
+    setBlog,
+  } = useContext(EditorContext);
+
+  console.log(blog);
 
   // Handle ketika file gambar dipilih
   const handleUploadBanner = (event) => {
@@ -31,10 +30,11 @@ const EditorFormComponent = () => {
 
     // Membuat URL sementara untuk gambar dan menampilkannya
     const previewUrl = URL.createObjectURL(img);
-    setImagePreview(previewUrl);
+
     toast.dismiss(toastLoading);
     toast.success("Gambar berhasil diunggah");
-    setSelectedImage(img); // Menyimpan file yang dipilih ke state
+
+    setBlog({ ...blog, banner: previewUrl }); // simpan ke state
   };
 
   // fungsi handle mematikan tombol enter
@@ -50,6 +50,15 @@ const EditorFormComponent = () => {
 
     input.style.height = "auto";
     input.style.height = `${input.scrollHeight}px`;
+
+    setBlog({ ...blog, title: input.value });
+  };
+
+  // fungsi error banner
+  const handleErrorBanner = (event) => {
+    const img = event.target;
+
+    img.src = defaultBanner;
   };
 
   // Handle ketika tombol Publish diklik
@@ -94,7 +103,7 @@ const EditorFormComponent = () => {
         </Link>
 
         <p className="max-md:hidden trxt-black line-clamp-1 w-full">
-          Blog Baru
+          {title.length ? title : "Blog Baru"}
         </p>
 
         <div className="flex gap-4 ml-auto ">
@@ -109,19 +118,13 @@ const EditorFormComponent = () => {
           <div className="mx-auto max-w-[900px] w-full">
             <div className="relative aspect-video hover:opacity-80 bg-white border-4 border-grey">
               <label htmlFor="uploadBanner">
-                {imagePreview ? (
-                  <img
-                    src={imagePreview}
-                    className="z-20"
-                    alt="Banner Preview"
-                  />
-                ) : (
-                  <img
-                    src={defaultBanner}
-                    className="z-20"
-                    alt="Default Banner"
-                  />
-                )}
+                <img
+                  src={banner}
+                  className="z-20"
+                  alt="Banner Preview"
+                  onError={handleErrorBanner}
+                />
+
                 <input
                   type="file"
                   id="uploadBanner"
@@ -137,6 +140,8 @@ const EditorFormComponent = () => {
               onKeyDown={handleTitleKeyDown}
               onChange={handleTitleChange}
             ></textarea>
+
+            <hr className="w-full opacity-10 my-5" />
           </div>
         </section>
       </AnimationWrapper>

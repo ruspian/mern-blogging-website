@@ -96,13 +96,13 @@ const generateUsername = async (email) => {
 };
 
 // Route untuk unggah gambar (untuk postingan blog)
-app.post("/create-blog", upload.single("image"), async (req, res) => {
+app.post("/image-url", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "File gambar tidak ditemukan" });
     }
 
-    const { title, des, content, tags, draft } = req.body;
+    // const { title, des, content, tags, draft } = req.body;
 
     // Buat entri blog baru
     const newBlog = new Blog({
