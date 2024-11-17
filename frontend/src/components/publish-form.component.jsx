@@ -3,6 +3,9 @@ import AnimationWrapper from "../common/page-animation";
 import { useContext } from "react";
 import { EditorContext } from "../pages/editor.pages";
 import Tag from "./tags.component";
+import axios from "axios";
+import { UserContext } from "../App";
+import { useNavigate } from "react-router-dom";
 
 const PublishFormComponent = () => {
   const caracterLimit = 200;
@@ -10,10 +13,16 @@ const PublishFormComponent = () => {
 
   let {
     blog,
-    blog: { banner, title, tags, des },
+    blog: { banner, title, tags, des, content },
     setEditorState,
     setBlog,
   } = useContext(EditorContext);
+
+  let {
+    userAuth: { access_token },
+  } = useContext(UserContext);
+
+  let navigate = useNavigate();
 
   // fungsi untuk menutup halaman
   const handleCloseEvent = () => {
@@ -59,6 +68,60 @@ const PublishFormComponent = () => {
       event.target.value = "";
     }
   };
+
+  // fungsi untuk mempublikasikan blog
+  const publishBlog = (event) => {
+    if (event.target.className.includes("disabled")) {
+      return;
+    }
+
+    if (!title.length) {
+      return toast.error("Tambahkan judul sebelum mempublikasikan blog");
+    }
+
+    if (!des.length || des.length > caracterLimit) {
+      return toast.error("Tambahkan deskripsi sebelum mempublikasikan blog");
+    }
+
+    if (!tags.length) {
+      return toast.error("Tambahkan Minimal 1 Tag!");
+    }
+
+    let loadingToast = toast.loading("Sedang Mempublish blog anda...");
+
+    event.target.classList.add("disabled");
+
+    let blogObject = {
+      title,
+      des,
+      tags,
+      content,
+      banner,
+      draft: false,
+    };
+
+    axios
+      .post(import.meta.env.VITE_SERVER_DOMAIN + "/create-blog", blogObject, {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      })
+      .then(() => {
+        event.target.classList.remove("disabled");
+        toast.dismiss(loadingToast);
+        toast.success("Blog anda berhasil dipublikasikan!");
+
+        setTimeout(() => {
+          navigate("/");
+        }, 500);
+      })
+      .catch(({ response }) => {
+        event.target.classList.remove("disabled");
+        toast.dismiss(loadingToast);
+        toast.error(response.data.error);
+      });
+  };
+
   return (
     <AnimationWrapper>
       <section className="w-screen min-h-screen grid items-center lg:grid-cols-2 py-16 lg:gap-4">
@@ -141,7 +204,9 @@ const PublishFormComponent = () => {
             </p>
           )}
 
-          <button className="btn-dark px-8">Publish</button>
+          <button className="btn-dark px-8" onClick={publishBlog}>
+            Publish
+          </button>
         </div>
       </section>
     </AnimationWrapper>
