@@ -16,28 +16,21 @@ const EditorFormComponent = () => {
     blog,
     blog: { title, banner, content, tags, des },
     setBlog,
+    textEditor,
+    setTextEditor,
+    setEditorState,
   } = useContext(EditorContext);
 
   //  hook
   useEffect(() => {
-    let editor = new EditorJS({
-      holder: "textEditor",
-      data: "",
-      tools: tools,
-      placeholder: "Tuliskan konten menarik anda disini...",
-      onReady: () => {
-        console.log("Editor siap digunakan.");
-      },
-      onChange: async () => {
-        await editor.save();
-      },
-    });
-
-    return () => {
-      editor
-        .destroy()
-        .catch((err) => console.error("Gagal menghancurkan editor:", err));
-    };
+    setTextEditor(
+      new EditorJS({
+        holder: "textEditor",
+        data: "",
+        tools: tools,
+        placeholder: "Tuliskan konten menarik anda disini...",
+      })
+    );
   }, []);
 
   // Handle ketika file gambar dipilih
@@ -139,6 +132,33 @@ const EditorFormComponent = () => {
   //   }
   // };
 
+  // fungsi handle ketika tombol publish diklik
+  const handlePublishEvent = () => {
+    if (!banner.length) {
+      return toast.error("Maaf gambar belum diunggah!");
+    }
+
+    if (!title.length) {
+      return toast.error("Maaf judul belum diisi!");
+    }
+
+    if (textEditor.isReady) {
+      textEditor
+        .save()
+        .then((data) => {
+          if (data.blocks.length) {
+            setBlog({ ...blog, content: data });
+            setEditorState("publish");
+          } else {
+            return toast.error("Tuliskan Sesuatu dalan blog anda!");
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  };
+
   return (
     <>
       <nav className="navbar">
@@ -151,7 +171,9 @@ const EditorFormComponent = () => {
         </p>
 
         <div className="flex gap-4 ml-auto ">
-          <button className="btn-dark py-2">Terbitkan</button>
+          <button className="btn-dark py-2" onClick={handlePublishEvent}>
+            Terbitkan
+          </button>
           <button className="btn-light py-2">Simpan Draft</button>
         </div>
         <Toaster />
