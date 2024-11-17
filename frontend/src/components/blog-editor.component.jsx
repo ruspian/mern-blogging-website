@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import logo from "../imgs/logo.png";
 import AnimationWrapper from "../common/page-animation";
 import defaultBanner from "../imgs/blog banner.png";
-import axios from "axios";
+// import axios from "axios";
 import { useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 
@@ -37,39 +37,54 @@ const EditorFormComponent = () => {
     setSelectedImage(img); // Menyimpan file yang dipilih ke state
   };
 
-  // Handle ketika tombol Publish diklik
-  const handlePublish = async () => {
-    if (!selectedImage) {
-      toast.error("Pilih gambar terlebih dahulu");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("image", selectedFile);
-    formData.append("title", blogData.title);
-    formData.append("des", blogData.des);
-    formData.append("content", blogData.content);
-    formData.append("tags", blogData.tags);
-    formData.append("draft", blogData.draft);
-
-    try {
-      const response = await axios.post(
-        "http://localhost:3000/create-blog",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      console.log("Blog berhasil diterbitkan:", response.data);
-      toast.success("Blog berhasil diterbitkan");
-      // Reset form setelah publish atau arahkan ke halaman lain
-    } catch (error) {
-      toast.error(error);
+  // fungsi handle mematikan tombol enter
+  const handleTitleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
     }
   };
+
+  // fungsi handle ganti judul
+  const handleTitleChange = (event) => {
+    const input = event.target;
+
+    input.style.height = "auto";
+    input.style.height = `${input.scrollHeight}px`;
+  };
+
+  // Handle ketika tombol Publish diklik
+  // const handlePublish = async () => {
+  //   if (!selectedImage) {
+  //     toast.error("Pilih gambar terlebih dahulu");
+  //     return;
+  //   }
+
+  //   const formData = new FormData();
+  //   formData.append("image", selectedFile);
+  //   formData.append("title", blogData.title);
+  //   formData.append("des", blogData.des);
+  //   formData.append("content", blogData.content);
+  //   formData.append("tags", blogData.tags);
+  //   formData.append("draft", blogData.draft);
+
+  //   try {
+  //     const response = await axios.post(
+  //       "http://localhost:3000/create-blog",
+  //       formData,
+  //       {
+  //         headers: {
+  //           "Content-Type": "multipart/form-data",
+  //         },
+  //       }
+  //     );
+
+  //     console.log("Blog berhasil diterbitkan:", response.data);
+  //     toast.success("Blog berhasil diterbitkan");
+  //     // Reset form setelah publish atau arahkan ke halaman lain
+  //   } catch (error) {
+  //     toast.error(error);
+  //   }
+  // };
 
   return (
     <>
@@ -83,9 +98,7 @@ const EditorFormComponent = () => {
         </p>
 
         <div className="flex gap-4 ml-auto ">
-          <button className="btn-dark py-2" onClick={handlePublish}>
-            Terbitkan
-          </button>
+          <button className="btn-dark py-2">Terbitkan</button>
           <button className="btn-light py-2">Simpan Draft</button>
         </div>
         <Toaster />
@@ -118,6 +131,12 @@ const EditorFormComponent = () => {
                 />
               </label>
             </div>
+            <textarea
+              placeholder="Judul Blog"
+              className="text-4xl font-medium w-full h-20 outline-none resize-none mt-10 leading-tight placeholder:opacity-40"
+              onKeyDown={handleTitleKeyDown}
+              onChange={handleTitleChange}
+            ></textarea>
           </div>
         </section>
       </AnimationWrapper>
