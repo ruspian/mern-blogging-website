@@ -72,6 +72,27 @@ const upload = multer({
   fileFilter: fileFilter,
   limits: { fileSize: 2 * 1024 * 1024 }, // Maksimal 2MB
 });
+
+// middleware JWT
+const verifyJWT = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (token == null) {
+    return res
+      .status(401)
+      .json({ error: "Maaf anda tidak memiliki akses token" });
+  }
+
+  jwt.verify(token, process.env.SECRET_ACCESS_KEY, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: "Acces token tidak valid" });
+    }
+    req.user = user.id;
+    next();
+  });
+};
+
 // format data yang dikirimkan
 const formatDataToSend = (user) => {
   // buat token
@@ -284,6 +305,83 @@ app.post("/google-auth", async (req, res) => {
         error:
           "Gagal mengautentikasi Anda dengan Google. Coba dengan akun Google lainnya",
       });
+    });
+});
+
+app.post("/create-blog", verifyJWT, (req, res) => {
+  let authorId = req.user;
+
+  // ambil data dari frontend
+  let { title, content, tags, des, banner, draft } = req.body;
+
+  if (!title.length) {
+    return res.status(403).json({ error: "Maaf judul belum diisi!" });
+  }
+
+  if (!des.length || des.length > 200) {
+    return res.status(403).json({ error: "Maaf deskripsi belum diisi!" });
+  }
+
+  if (!banner.length) {
+    return res
+      .status(403)
+      .json({ error: "Maaf gambar banner belum diunggah!" });
+  }
+
+  if (!content.blocks.length) {
+    return res
+      .status(403)
+      .json({ error: "Tuliskan Sesuatu yang menarik dalam blog anda!" });
+  }
+
+  if (!tags.length || tags.length > 10) {
+    return res.status(403).json({ error: "Tambahkan minimal satu tagar!" });
+  }
+
+  // mengubah tag menjadi huruf kecil
+  tags = tags.map((tag) => {
+    return tag.toLowerCase();
+  });
+
+  let blog_id =
+    title
+      .replace(/[^a-zA-Z0-9]/g, " ")
+      .replace(/\s+/g, "-")
+      .trim() + nanoid();
+
+  let blog = new Blog({
+    blog_id,
+    title,
+    banner,
+    des,
+    content,
+    tags,
+    author: authorId,
+    draft: Boolean(draft),
+  });
+
+  blog
+    .save()
+    .then((blog) => {
+      // untuk menghitung jumlah blog yang ada
+      let incrementVal = draft ? 0 : 1;
+
+      User.findOneAndUpdate(
+        { _id: authorId },
+        {
+          $inc: { "account_info.total_posts": incrementVal },
+          $push: { blogs: blog._id },
+        }
+      )
+        .then((user) => {
+          return res.status(200).json({ id: blog_id });
+        })
+        .catch((err) => {
+          return res.status(500).json({ error: "gagal mengupdate total post" });
+        });
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: err.message });
     });
 });
 
