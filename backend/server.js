@@ -9,6 +9,7 @@ import { getAuth } from "firebase-admin/auth";
 import serviceAccountKey from "./config/firebaseConfig.js";
 import multer from "multer";
 import path from "path";
+import { fileURLToPath } from "url";
 import "dotenv/config";
 
 // import schema
@@ -26,6 +27,10 @@ admin.initializeApp({
 let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex untuk email
 let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex untuk password
 
+// Definisikan __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // middleware
 app.use(express.json());
 app.use(
@@ -34,7 +39,7 @@ app.use(
     credentials: true,
   })
 );
-app.use("./uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // koneksi ke database mongoodb
 mongoose.connect(process.env.DB_LOCATION, {
@@ -44,7 +49,7 @@ mongoose.connect(process.env.DB_LOCATION, {
 // Konfigurasi Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "./uploads/");
+    cb(null, "./uploads/blogpost/");
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -97,35 +102,17 @@ const generateUsername = async (email) => {
 
 // Route untuk unggah gambar (untuk postingan blog)
 app.post("/image-url", upload.single("image"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: "File gambar tidak ditemukan" });
-    }
-
-    // const { title, des, content, tags, draft } = req.body;
-
-    // Buat entri blog baru
-    const newBlog = new Blog({
-      blog_id: new mongoose.Types.ObjectId().toString(),
-      title,
-      banner: `/uploads/blogpost/${req.file.filename}`, // Menyimpan path gambar banner
-      des,
-      content: JSON.parse(content), // Menyimpan konten dalam format array atau JSON
-      tags: tags.split(","),
-      draft,
-      author: req.user._id, // Misalnya menggunakan id user yang login
-    });
-
-    await newBlog.save();
-
-    return res.status(200).json({
-      message: "Blog berhasil diupload",
-      blog: newBlog,
-    });
-  } catch (error) {
-    console.error("Error saat meng-upload blog:", error);
-    return res.status(500).json({ error: "Terjadi kesalahan pada server" });
+  if (!req.file) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Tidak ada gambar yang diunggah" });
   }
+
+  res.json({
+    success: true,
+    filePath: `/uploads/blogpost/${req.file.filename}`,
+    fileName: req.file.filename,
+  });
 });
 
 // route

@@ -3,9 +3,12 @@ import logo from "../imgs/logo.png";
 import AnimationWrapper from "../common/page-animation";
 import defaultBanner from "../imgs/blog banner.png";
 // import axios from "axios";
-import { useContext, useState } from "react";
+import { useContext, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import { EditorContext } from "../pages/editor.pages";
+import EditorJS from "@editorjs/editorjs";
+import { tools } from "./tools.component";
+import axios from "axios";
 
 const EditorFormComponent = () => {
   // kontext editor
@@ -15,10 +18,30 @@ const EditorFormComponent = () => {
     setBlog,
   } = useContext(EditorContext);
 
-  console.log(blog);
+  //  hook
+  useEffect(() => {
+    let editor = new EditorJS({
+      holder: "textEditor",
+      data: "",
+      tools: tools,
+      placeholder: "Tuliskan konten menarik anda disini...",
+      onReady: () => {
+        console.log("Editor siap digunakan.");
+      },
+      onChange: async () => {
+        await editor.save();
+      },
+    });
+
+    return () => {
+      editor
+        .destroy()
+        .catch((err) => console.error("Gagal menghancurkan editor:", err));
+    };
+  }, []);
 
   // Handle ketika file gambar dipilih
-  const handleUploadBanner = (event) => {
+  const handleUploadBanner = async (event) => {
     const img = event.target.files[0];
 
     const toastLoading = toast.loading("Mengunggah gambar...");
@@ -28,13 +51,34 @@ const EditorFormComponent = () => {
       return;
     }
 
-    // Membuat URL sementara untuk gambar dan menampilkannya
-    const previewUrl = URL.createObjectURL(img);
+    try {
+      // Buat form-data untuk mengirim file
+      const formData = new FormData();
+      formData.append("image", img);
 
-    toast.dismiss(toastLoading);
-    toast.success("Gambar berhasil diunggah");
+      // Kirim permintaan ke server
+      const response = await axios.post(
+        "http://localhost:3000/image-url",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-    setBlog({ ...blog, banner: previewUrl }); // simpan ke state
+      const { filePath } = response.data;
+      const fullPath = import.meta.env.VITE_SERVER_DOMAIN + filePath;
+
+      // Set preview URL dan simpan file path dari server ke state
+      setBlog({ ...blog, banner: fullPath });
+
+      toast.dismiss(toastLoading);
+      toast.success("Gambar berhasil diunggah!");
+    } catch (error) {
+      toast.dismiss(toastLoading);
+      toast.error("Gagal mengunggah gambar");
+    }
   };
 
   // fungsi handle mematikan tombol enter
@@ -142,6 +186,8 @@ const EditorFormComponent = () => {
             ></textarea>
 
             <hr className="w-full opacity-10 my-5" />
+
+            <div className="font-gelasio" id="textEditor" />
           </div>
         </section>
       </AnimationWrapper>
