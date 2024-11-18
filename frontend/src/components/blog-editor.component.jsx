@@ -1,14 +1,14 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../imgs/logo.png";
 import AnimationWrapper from "../common/page-animation";
 import defaultBanner from "../imgs/blog banner.png";
-// import axios from "axios";
 import { useContext, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import { EditorContext } from "../pages/editor.pages";
 import EditorJS from "@editorjs/editorjs";
 import { tools } from "./tools.component";
 import axios from "axios";
+import { UserContext } from "../App";
 
 const EditorFormComponent = () => {
   // kontext editor
@@ -20,6 +20,12 @@ const EditorFormComponent = () => {
     setTextEditor,
     setEditorState,
   } = useContext(EditorContext);
+
+  let {
+    userAuth: { access_token },
+  } = useContext(UserContext);
+
+  let navigate = useNavigate();
 
   //  hook
   useEffect(() => {
@@ -159,6 +165,59 @@ const EditorFormComponent = () => {
     }
   };
 
+  // fungsi handle ketika tombol save draft diklik
+  const handleSaveDraft = (event) => {
+    if (event.target.className.includes("disabled")) {
+      return;
+    }
+
+    if (!title.length) {
+      return toast.error("Tambahkan judul sebelum menyimpan draft");
+    }
+
+    let loadingToast = toast.loading("Sedang menyimpan di draft...");
+
+    event.target.classList.add("disabled");
+
+    if (textEditor.isReady) {
+      textEditor.save().then((content) => {
+        let blogObject = {
+          title,
+          des,
+          tags,
+          content,
+          banner,
+          draft: true,
+        };
+
+        axios
+          .post(
+            import.meta.env.VITE_SERVER_DOMAIN + "/create-blog",
+            blogObject,
+            {
+              headers: {
+                Authorization: `Bearer ${access_token}`,
+              },
+            }
+          )
+          .then(() => {
+            event.target.classList.remove("disabled");
+            toast.dismiss(loadingToast);
+            toast.success("Berhasil menyimpan draft!");
+
+            setTimeout(() => {
+              navigate("/");
+            }, 500);
+          })
+          .catch(({ response }) => {
+            event.target.classList.remove("disabled");
+            toast.dismiss(loadingToast);
+            toast.error(response.data.error);
+          });
+      });
+    }
+  };
+
   return (
     <>
       <nav className="navbar">
@@ -174,7 +233,9 @@ const EditorFormComponent = () => {
           <button className="btn-dark py-2" onClick={handlePublishEvent}>
             Terbitkan
           </button>
-          <button className="btn-light py-2">Simpan Draft</button>
+          <button className="btn-light py-2" onClick={handleSaveDraft}>
+            Simpan Draft
+          </button>
         </div>
         <Toaster />
       </nav>

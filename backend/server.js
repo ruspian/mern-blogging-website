@@ -318,24 +318,26 @@ app.post("/create-blog", verifyJWT, (req, res) => {
     return res.status(403).json({ error: "Maaf judul belum diisi!" });
   }
 
-  if (!des.length || des.length > 200) {
-    return res.status(403).json({ error: "Maaf deskripsi belum diisi!" });
-  }
+  if (!draft) {
+    if (!des.length || des.length > 200) {
+      return res.status(403).json({ error: "Maaf deskripsi belum diisi!" });
+    }
 
-  if (!banner.length) {
-    return res
-      .status(403)
-      .json({ error: "Maaf gambar banner belum diunggah!" });
-  }
+    if (!banner.length) {
+      return res
+        .status(403)
+        .json({ error: "Maaf gambar banner belum diunggah!" });
+    }
 
-  if (!content.blocks.length) {
-    return res
-      .status(403)
-      .json({ error: "Tuliskan Sesuatu yang menarik dalam blog anda!" });
-  }
+    if (!content.blocks.length) {
+      return res
+        .status(403)
+        .json({ error: "Tuliskan Sesuatu yang menarik dalam blog anda!" });
+    }
 
-  if (!tags.length || tags.length > 10) {
-    return res.status(403).json({ error: "Tambahkan minimal satu tagar!" });
+    if (!tags.length || tags.length > 10) {
+      return res.status(403).json({ error: "Tambahkan minimal satu tagar!" });
+    }
   }
 
   // mengubah tag menjadi huruf kecil
