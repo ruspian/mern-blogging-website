@@ -1,8 +1,18 @@
+import AnimationWrapper from "../common/page-animation";
+
 const HomePage = () => {
   return (
-    <div>
-      <h1>Home Page</h1>
-    </div>
+    <AnimationWrapper>
+      <section className="h-cover flex justify-center gap-10">
+        {/* blog terbaru */}
+        <div className="w-full ">
+          <InPageNavigation></InPageNavigation>
+        </div>
+
+        {/* filter dan trending blog */}
+        <div className=""></div>
+      </section>
+    </AnimationWrapper>
   );
 };
 
