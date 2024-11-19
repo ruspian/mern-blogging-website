@@ -6,6 +6,7 @@ import axios from "axios";
 import Loader from "../components/loader.component";
 import BlogPostCardComponent from "../components/blog-post.component";
 import PopulerBlogPostComponent from "../components/nobanner-blog-post.component";
+import NoDataMessageComponent from "../components/nodata.component";
 
 const HomePage = () => {
   let [blogs, setBlogs] = useState(null);
@@ -109,7 +110,7 @@ const HomePage = () => {
             <>
               {blogs === null ? (
                 <Loader />
-              ) : (
+              ) : blogs.length ? (
                 blogs.map((blog, index) => {
                   return (
                     <AnimationWrapper
@@ -123,13 +124,15 @@ const HomePage = () => {
                     </AnimationWrapper>
                   );
                 })
+              ) : (
+                <NoDataMessageComponent message="Blog kosong!" />
               )}
             </>
 
             {/* blog terpopuler */}
             {populerBlog === null ? (
               <Loader />
-            ) : (
+            ) : populerBlog.length ? (
               populerBlog.map((blog, index) => {
                 return (
                   <AnimationWrapper
@@ -140,6 +143,8 @@ const HomePage = () => {
                   </AnimationWrapper>
                 );
               })
+            ) : (
+              <NoDataMessageComponent message="Tidak ada blog populer!" />
             )}
           </InPageNavigation>
         </div>
@@ -180,7 +185,7 @@ const HomePage = () => {
               {/* populer blog */}
               {populerBlog === null ? (
                 <Loader />
-              ) : (
+              ) : populerBlog ? (
                 populerBlog.map((blog, index) => {
                   return (
                     <AnimationWrapper
@@ -191,6 +196,8 @@ const HomePage = () => {
                     </AnimationWrapper>
                   );
                 })
+              ) : (
+                <NoDataMessageComponent message="Tidak ada blog populer!" />
               )}
             </div>
           </div>
