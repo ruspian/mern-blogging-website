@@ -4,9 +4,11 @@ import InPageNavigation from "../components/inpage-navigation.component";
 import axios from "axios";
 import Loader from "../components/loader.component";
 import BlogPostCardComponent from "../components/blog-post.component";
+import PopulerBlogPostComponent from "../components/nobanner-blog-post.component";
 
 const HomePage = () => {
   let [blogs, setBlogs] = useState(null);
+  let [populerBlog, setPopulerBlog] = useState(null);
 
   // mengambil data blog terbaru dari baackend
   const fetchLatestBlog = () => {
@@ -21,9 +23,23 @@ const HomePage = () => {
       });
   };
 
+  // mengambil data blog terpopuler dari baackend
+  const fetchPopulerBlog = () => {
+    axios
+      .get(import.meta.env.VITE_SERVER_DOMAIN + "/blog-terpopuler")
+      .then(({ data }) => {
+        setPopulerBlog(data.blogs);
+        // console.log(data.blogs);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
   useEffect(() => {
     fetchLatestBlog();
-  });
+    fetchPopulerBlog();
+  }, []);
 
   return (
     <AnimationWrapper>
@@ -53,7 +69,22 @@ const HomePage = () => {
                 })
               )}
             </>
-            <h1>ini blog populer</h1>
+
+            {/* blog terpopuler */}
+            {populerBlog === null ? (
+              <Loader />
+            ) : (
+              populerBlog.map((blog, index) => {
+                return (
+                  <AnimationWrapper
+                    key={index}
+                    transition={{ duration: 1, delay: index * 0.1 }}
+                  >
+                    <PopulerBlogPostComponent />
+                  </AnimationWrapper>
+                );
+              })
+            )}
           </InPageNavigation>
         </div>
 
