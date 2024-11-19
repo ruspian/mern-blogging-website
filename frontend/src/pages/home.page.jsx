@@ -41,6 +41,21 @@ const HomePage = () => {
       });
   };
 
+  // mengambil data kategori dari backend
+  const fetchBlogByCategory = () => {
+    axios
+      .post(import.meta.env.VITE_SERVER_DOMAIN + "/cari-blog", {
+        tag: pageState,
+      })
+      .then(({ data }) => {
+        setBlogs(data.blogs);
+        // console.log(data.blogs);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
   // mengambil data blog terpopuler dari baackend
   const fetchPopulerBlog = () => {
     axios
@@ -56,16 +71,16 @@ const HomePage = () => {
 
   // fungsi tetika tombol kategori di klik
   const loadBlogByCategory = (event) => {
-    let kategori = event.target.innerText.toLowerCase();
+    let category = event.target.innerText.toLowerCase();
 
     setBlogs(null);
 
-    if (pageState === kategori) {
+    if (pageState === category) {
       setPageState("home");
       return;
     }
 
-    setPageState(kategori);
+    setPageState(category);
   };
 
   useEffect(() => {
@@ -73,6 +88,8 @@ const HomePage = () => {
 
     if (pageState == "home") {
       fetchLatestBlog();
+    } else {
+      fetchBlogByCategory();
     }
 
     if (!populerBlog) {
@@ -133,7 +150,8 @@ const HomePage = () => {
             {/* kategori */}
             <div className="">
               <h1 className="font-medium text-xl mb-8">
-                Kisah menjadi akar dari setiap ketertarikan.
+                Temukan blog yang anda suka
+                <i className="fi fi-bs-search-alt pl-2"></i>
               </h1>
 
               <div className="flex gap-3 flex-wrap">
