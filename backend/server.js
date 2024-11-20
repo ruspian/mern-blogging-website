@@ -308,7 +308,9 @@ app.post("/google-auth", async (req, res) => {
     });
 });
 
-app.get("/blog-terbaru", (req, res) => {
+app.post("/blog-terbaru", (req, res) => {
+  let { page } = req.body;
+
   let maxLimit = 5;
 
   // ambil data blog dari database
@@ -319,12 +321,23 @@ app.get("/blog-terbaru", (req, res) => {
     )
     .sort({ publishedAt: -1 })
     .select("blog_id title des banner activity tags publishedAt -_id")
+    .skip((page - 1) * maxLimit)
     .limit(maxLimit)
     .then((blogs) => {
       return res.status(200).json({ blogs });
     })
     .catch((err) => {
       return res.status(500).json({ error: err.message });
+    });
+});
+
+app.post("/semua-blog-terbaru", (req, res) => {
+  Blog.countDocuments({ draft: false })
+    .then((count) => {
+      return res.status(200).json({ totalDocs: count });
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: err.massage });
     });
 });
 
@@ -351,7 +364,7 @@ app.get("/blog-terpopuler", (req, res) => {
 });
 
 app.post("/cari-blog", (req, res) => {
-  let { tag } = req.body;
+  let { tag, page } = req.body;
 
   let findQuery = { tags: tag, draft: false };
 
@@ -364,6 +377,7 @@ app.post("/cari-blog", (req, res) => {
     )
     .sort({ publishedAt: -1 })
     .select("blog_id title des banner activity tags publishedAt -_id")
+    .skip((page - 1) * maxLimit)
     .limit(maxLimit)
     .then((blogs) => {
       return res.status(200).json({ blogs });
@@ -449,6 +463,20 @@ app.post("/create-blog", verifyJWT, (req, res) => {
     })
     .catch((err) => {
       return res.status(500).json({ error: err.message });
+    });
+});
+
+app.post("/blog-kategori", (req, res) => {
+  let { tag } = req.body;
+
+  let findQuery = { tags: tag, draft: false };
+
+  Blog.countDocuments(findQuery)
+    .then((count) => {
+      return res.status(200).json({ totalDocs: count });
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: err.massage });
     });
 });
 

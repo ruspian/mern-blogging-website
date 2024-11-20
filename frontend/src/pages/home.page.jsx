@@ -7,9 +7,19 @@ import Loader from "../components/loader.component";
 import BlogPostCardComponent from "../components/blog-post.component";
 import PopulerBlogPostComponent from "../components/nobanner-blog-post.component";
 import NoDataMessageComponent from "../components/nodata.component";
+import { filterPaginationData } from "../common/filter-pagination-data";
+import LoadMoreDataBtn from "../components/load-more.component";
 
 const HomePage = () => {
   let [blogs, setBlogs] = useState(null);
+
+  // blogs = [ {}, {}, {}];
+  // blogs = {
+  //   result: [ {}, {}, {}],
+  //   page:1,
+  //   totalDocs: 10
+  // }
+
   let [populerBlog, setPopulerBlog] = useState(null);
   let [pageState, setPageState] = useState("home");
 
@@ -30,12 +40,19 @@ const HomePage = () => {
   ];
 
   // mengambil data blog terbaru dari baackend
-  const fetchLatestBlog = () => {
+  const fetchLatestBlog = ({ page = 1 }) => {
     axios
-      .get(import.meta.env.VITE_SERVER_DOMAIN + "/blog-terbaru")
-      .then(({ data }) => {
-        setBlogs(data.blogs);
-        // console.log(data.blogs);
+      .post(import.meta.env.VITE_SERVER_DOMAIN + "/blog-terbaru", { page })
+      .then(async ({ data }) => {
+        let formatedData = await filterPaginationData({
+          state: blogs,
+          data: data.blogs,
+          page: 1,
+          countRoute: "/semua-blog-terbaru",
+        });
+
+        // console.log(formatedData);
+        setBlogs(formatedData);
       })
       .catch((err) => {
         console.log(err);
@@ -43,14 +60,23 @@ const HomePage = () => {
   };
 
   // mengambil data kategori dari backend
-  const fetchBlogByCategory = () => {
+  const fetchBlogByCategory = ({ page = 1 }) => {
     axios
       .post(import.meta.env.VITE_SERVER_DOMAIN + "/cari-blog", {
         tag: pageState,
+        page,
       })
-      .then(({ data }) => {
-        setBlogs(data.blogs);
-        // console.log(data.blogs);
+      .then(async ({ data }) => {
+        let formatedData = await filterPaginationData({
+          state: blogs,
+          data: data.blogs,
+          page,
+          countRoute: "/blog-kategori",
+          data_to_send: { tag: pageState },
+        });
+
+        // console.log(formatedData);
+        setBlogs(formatedData);
       })
       .catch((err) => {
         console.log(err);
@@ -88,9 +114,9 @@ const HomePage = () => {
     activeTab.current.click();
 
     if (pageState == "home") {
-      fetchLatestBlog();
+      fetchLatestBlog({ page: 1 });
     } else {
-      fetchBlogByCategory();
+      fetchBlogByCategory({ page: 1 });
     }
 
     if (!populerBlog) {
@@ -110,8 +136,8 @@ const HomePage = () => {
             <>
               {blogs === null ? (
                 <Loader />
-              ) : blogs.length ? (
-                blogs.map((blog, index) => {
+              ) : blogs.result.length ? (
+                blogs.result.map((blog, index) => {
                   return (
                     <AnimationWrapper
                       key={index}
@@ -127,6 +153,12 @@ const HomePage = () => {
               ) : (
                 <NoDataMessageComponent message="Blog kosong!" />
               )}
+              <LoadMoreDataBtn
+                state={blogs}
+                fetchDataFun={
+                  pageState === "home" ? fetchLatestBlog : fetchBlogByCategory
+                }
+              />
             </>
 
             {/* blog terpopuler */}
