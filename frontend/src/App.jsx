@@ -5,6 +5,7 @@ import { createContext, useEffect, useState } from "react";
 import { lookInSession } from "./common/session";
 import EditorPage from "./pages/editor.pages";
 import HomePage from "./pages/home.page";
+import SearchPage from "./pages/search.page";
 
 // membuat global context untuk mengelolah data
 export const UserContext = createContext({});
@@ -29,6 +30,7 @@ const App = () => {
           <Route index element={<HomePage />} />
           <Route path="signin" element={<UserAuthForm type="sign-in" />} />
           <Route path="signup" element={<UserAuthForm type="sign-up" />} />
+          <Route path="cari/:query" element={<SearchPage />} />
         </Route>
       </Routes>
     </UserContext.Provider>
