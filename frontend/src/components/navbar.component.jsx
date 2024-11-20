@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import { UserContext } from "../App";
 import logo from "../imgs/logo.png";
 import UserNavigationPanel from "./user-navigation.component";
@@ -7,6 +7,8 @@ import UserNavigationPanel from "./user-navigation.component";
 const Navbar = () => {
   const [boxPencarian, setBoxPencarian] = useState(false);
   const [userNavPanel, setUserNavPanel] = useState(false);
+
+  const navigate = useNavigate();
 
   const {
     userAuth,
@@ -16,6 +18,15 @@ const Navbar = () => {
   // fungsi untuk handle user nav panel
   const handleUserNavPanel = () => {
     setUserNavPanel(!userNavPanel);
+  };
+
+  // fungsi untuk handle pencarian
+  const handleSearch = (event) => {
+    let query = event.target.value;
+
+    if (event.keyCode === 13 && query.length) {
+      navigate(`/cari/${query}`);
+    }
   };
 
   // fungsi untuk handle blur
@@ -44,6 +55,7 @@ const Navbar = () => {
             type="text"
             placeholder="Cari..."
             className="w-full md:w-auto bg-grey p-4 pl-6 pr-[12%] md:pr-6 rounded-full claceholder:text-dark-grey md:pl-12"
+            onKeyDown={handleSearch}
           />
           <i className="fi fi-br-search absolute right-[10%] md:pointer-events-none md:left-5 top-1/2 -translate-y-1/2 text-xl text-dark-grey"></i>
         </div>

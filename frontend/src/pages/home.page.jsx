@@ -153,6 +153,7 @@ const HomePage = () => {
               ) : (
                 <NoDataMessageComponent message="Blog kosong!" />
               )}
+
               <LoadMoreDataBtn
                 state={blogs}
                 fetchDataFun={
