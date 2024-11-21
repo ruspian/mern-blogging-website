@@ -365,13 +365,15 @@ app.get("/blog-terpopuler", (req, res) => {
 });
 
 app.post("/cari-blog", (req, res) => {
-  let { tag, query, page } = req.body;
+  let { tag, query, author, page } = req.body;
   let findQuery;
 
   if (tag) {
     findQuery = { tags: tag, draft: false };
   } else if (query) {
     findQuery = { draft: false, title: new RegExp(query, "i") };
+  } else if (author) {
+    findQuery = { author, draft: false };
   }
 
   let maxLimit = 2;
@@ -394,7 +396,7 @@ app.post("/cari-blog", (req, res) => {
 });
 
 app.post("/blog-kategori", (req, res) => {
-  let { tag, query } = req.body;
+  let { tag, query, author } = req.body;
 
   let findQuery;
 
@@ -402,6 +404,8 @@ app.post("/blog-kategori", (req, res) => {
     findQuery = { tags: tag, draft: false };
   } else if (query) {
     findQuery = { draft: false, title: new RegExp(query, "i") };
+  } else if (author) {
+    findQuery = { author, draft: false };
   }
 
   Blog.countDocuments(findQuery)
