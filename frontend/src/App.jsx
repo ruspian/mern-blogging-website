@@ -8,6 +8,7 @@ import HomePage from "./pages/home.page";
 import SearchPage from "./pages/search.page";
 import PageNotFound from "./pages/404.page";
 import ProfilPage from "./pages/profile.page";
+import BlogPage from "./pages/blog.page";
 
 // membuat global context untuk mengelolah data
 export const UserContext = createContext({});
@@ -34,6 +35,7 @@ const App = () => {
           <Route path="signup" element={<UserAuthForm type="sign-up" />} />
           <Route path="cari/:query" element={<SearchPage />} />
           <Route path="user/:id" element={<ProfilPage />} />
+          <Route path="blog/:blog_id" element={<BlogPage />} />
           <Route path="*" element={<PageNotFound />} />
         </Route>
       </Routes>
