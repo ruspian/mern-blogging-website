@@ -13,6 +13,7 @@ const SearchPage = () => {
   let { query } = useParams();
 
   let [blogs, setBlogs] = useState(null);
+  let [users, setUsers] = useState(null);
 
   const searchBlogs = ({ page = 1, create_new_arr = false }) => {
     axios
@@ -35,13 +36,26 @@ const SearchPage = () => {
       });
   };
 
+  const fetchSearchUsers = () => {
+    axios
+      .post(import.meta.env.VITE_SERVER_DOMAIN + "/cari-blog", { query })
+      .then(async ({ data: { users } }) => {
+        setUsers(users);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
   useEffect(() => {
     resetState();
     searchBlogs({ page: 1, create_new_arr: true });
+    fetchSearchUsers();
   }, [query]);
 
   const resetState = () => {
     setBlogs(null);
+    setUsers(null);
   };
 
   return (
