@@ -6,6 +6,7 @@ import { lookInSession } from "./common/session";
 import EditorPage from "./pages/editor.pages";
 import HomePage from "./pages/home.page";
 import SearchPage from "./pages/search.page";
+import PageNotFound from "./pages/404.page";
 
 // membuat global context untuk mengelolah data
 export const UserContext = createContext({});
@@ -31,6 +32,7 @@ const App = () => {
           <Route path="signin" element={<UserAuthForm type="sign-in" />} />
           <Route path="signup" element={<UserAuthForm type="sign-up" />} />
           <Route path="cari/:query" element={<SearchPage />} />
+          <Route path="*" element={<PageNotFound />} />
         </Route>
       </Routes>
     </UserContext.Provider>
