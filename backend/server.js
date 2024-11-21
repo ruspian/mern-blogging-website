@@ -429,6 +429,19 @@ app.post("/cari-pengguna", (req, res) => {
     });
 });
 
+app.post("/profil", (req, res) => {
+  let { username } = req.body;
+
+  User.findOne({ "personal_info.username": username })
+    .select("-personal_info.password -google_auth -updateAt -blogs")
+    .then((user) => {
+      return res.status(200).json(user);
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: err.message });
+    });
+});
+
 app.post("/create-blog", verifyJWT, (req, res) => {
   let authorId = req.user;
 
