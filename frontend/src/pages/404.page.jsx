@@ -10,7 +10,7 @@ const PageNotFound = () => {
         className="select-none border-2 border-grey w-72 aspect-square object-cover rounded"
       />
 
-      <h1 className="text-4xl font-gelasio leading-7 ">
+      <h1 className="text-3xl font-gelasio leading-7 ">
         Halaman Tidak Ditemukan!
       </h1>
       <p className="text-dark-grey font-gelasio text-xl leading-7 -mt-8">
