@@ -337,6 +337,7 @@ app.post("/semua-blog-terbaru", (req, res) => {
       return res.status(200).json({ totalDocs: count });
     })
     .catch((err) => {
+      console.log(err.message);
       return res.status(500).json({ error: err.massage });
     });
 });

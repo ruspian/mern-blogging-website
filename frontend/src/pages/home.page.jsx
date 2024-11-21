@@ -13,13 +13,6 @@ import LoadMoreDataBtn from "../components/load-more.component";
 const HomePage = () => {
   let [blogs, setBlogs] = useState(null);
 
-  // blogs = [ {}, {}, {}];
-  // blogs = {
-  //   result: [ {}, {}, {}],
-  //   page:1,
-  //   totalDocs: 10
-  // }
-
   let [populerBlog, setPopulerBlog] = useState(null);
   let [pageState, setPageState] = useState("home");
 
@@ -44,6 +37,8 @@ const HomePage = () => {
     axios
       .post(import.meta.env.VITE_SERVER_DOMAIN + "/blog-terbaru", { page })
       .then(async ({ data }) => {
+        // console.log(data.blogs);
+
         let formatedData = await filterPaginationData({
           state: blogs,
           data: data.blogs,
