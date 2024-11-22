@@ -5,12 +5,12 @@ import AnimationWrapper from "../common/page-animation";
 import Loader from "../components/loader.component";
 import { tanggal } from "../common/date";
 import BlogInteractionComponent from "../components/blog-interaction.component";
+import BlogPostCardComponent from "../components/blog-post.component";
 
 export const blogDataStructure = {
   title: "",
   des: "",
   content: [],
-  tags: [],
   author: {
     personal_info: {},
   },
@@ -24,6 +24,7 @@ const BlogPage = () => {
   let { blog_id } = useParams();
 
   let [blog, setBlog] = useState(blogDataStructure);
+  let [similarBlogs, setSimilarBlogs] = useState(null);
   let [loading, setLoading] = useState(true);
 
   let {
@@ -41,6 +42,21 @@ const BlogPage = () => {
       .post(import.meta.env.VITE_SERVER_DOMAIN + "/blog", { blog_id })
       .then(({ data: { blog } }) => {
         setBlog(blog);
+
+        axios
+          .post(import.meta.env.VITE_SERVER_DOMAIN + "/cari-blog", {
+            tag: blog.tags[0],
+            limit: 6,
+            eliminate_blog: blog_id,
+          })
+          .then(({ data }) => {
+            setSimilarBlogs(data.blogs);
+            // console.log(data.blogs);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+
         setLoading(false);
         // console.log(blog);
       })
@@ -51,8 +67,15 @@ const BlogPage = () => {
   };
 
   useEffect(() => {
+    resetState();
     fetchBlog();
   }, []);
+
+  const resetState = () => {
+    setBlog(blogDataStructure);
+    setSimilarBlogs(null);
+    setLoading(true);
+  };
 
   return (
     <AnimationWrapper transition={{ duration: 0.2 }}>
@@ -85,6 +108,38 @@ const BlogPage = () => {
             </div>
 
             <BlogInteractionComponent />
+
+            {/* konten blog akan ada di sini */}
+
+            <BlogInteractionComponent />
+
+            {similarBlogs !== null && similarBlogs.length ? (
+              <>
+                <h1 className="text-2xl mt-14 mb-10 font-medium">
+                  Blog Serupa
+                </h1>
+
+                {similarBlogs.map((blog, index) => {
+                  let {
+                    author: { personal_info },
+                  } = blog;
+
+                  return (
+                    <AnimationWrapper
+                      key={index}
+                      transition={{ duration: 1, delay: index * 0.08 }}
+                    >
+                      <BlogPostCardComponent
+                        content={blog}
+                        author={personal_info}
+                      />
+                    </AnimationWrapper>
+                  );
+                })}
+              </>
+            ) : (
+              ""
+            )}
           </div>
         </BlogContext.Provider>
       )}
