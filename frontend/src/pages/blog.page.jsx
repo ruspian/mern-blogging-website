@@ -6,6 +6,7 @@ import Loader from "../components/loader.component";
 import { tanggal } from "../common/date";
 import BlogInteractionComponent from "../components/blog-interaction.component";
 import BlogPostCardComponent from "../components/blog-post.component";
+import BlogContentComponent from "../components/blog-content.component";
 
 export const blogDataStructure = {
   title: "",
@@ -29,7 +30,7 @@ const BlogPage = () => {
 
   let {
     title,
-    conten,
+    content,
     banner,
     author: {
       personal_info: { fullname, profile_img, username: author_username },
@@ -42,6 +43,7 @@ const BlogPage = () => {
       .post(import.meta.env.VITE_SERVER_DOMAIN + "/blog", { blog_id })
       .then(({ data: { blog } }) => {
         setBlog(blog);
+        // console.log(blog.content);
 
         axios
           .post(import.meta.env.VITE_SERVER_DOMAIN + "/cari-blog", {
@@ -110,6 +112,15 @@ const BlogPage = () => {
             <BlogInteractionComponent />
 
             {/* konten blog akan ada di sini */}
+            <div className="my-12 font-gelasio blog-page-content">
+              {content[0].blocks.map((block, index) => {
+                return (
+                  <div key={index} className="my-4 md:my-8">
+                    <BlogContentComponent block={block} />
+                  </div>
+                );
+              })}
+            </div>
 
             <BlogInteractionComponent />
 
