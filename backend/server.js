@@ -450,7 +450,7 @@ app.post("/create-blog", verifyJWT, (req, res) => {
   let authorId = req.user;
 
   // ambil data dari frontend
-  let { title, content, tags, des, banner, draft } = req.body;
+  let { title, content, tags, des, banner, draft, id } = req.body;
 
   if (!title.length) {
     return res.status(403).json({ error: "Maaf judul belum diisi!" });
@@ -484,51 +484,67 @@ app.post("/create-blog", verifyJWT, (req, res) => {
   });
 
   let blog_id =
+    id ||
     title
       .replace(/[^a-zA-Z0-9]/g, " ")
       .replace(/\s+/g, "-")
       .trim() + nanoid();
 
-  let blog = new Blog({
-    title,
-    des,
-    banner,
-    content,
-    tags,
-    author: authorId,
-    draft: Boolean(draft),
-    blog_id,
-  });
-
-  blog
-    .save()
-    .then((blog) => {
-      // untuk menghitung jumlah blog yang ada
-      let incrementVal = draft ? 0 : 1;
-
-      User.findOneAndUpdate(
-        { _id: authorId },
-        {
-          $inc: { "account_info.total_posts": incrementVal },
-          $push: { blogs: blog._id },
-        }
-      )
-        .then((user) => {
-          return res.status(200).json({ id: blog_id });
-        })
-        .catch((err) => {
-          return res.status(500).json({ error: "gagal mengupdate total post" });
-        });
-    })
-    .catch((err) => {
-      return res.status(500).json({ error: err.message });
+  if (id) {
+    Blog.findOneAndUpdate(
+      { blog_id },
+      { title, des, banner, content, tags, draft: draft ? draft : false }
+    )
+      .then(() => {
+        return res.status(200).json({ id: blog_id });
+      })
+      .catch((err) => {
+        return res.status(500).json({ error: "Update konten blog gagal!" });
+      });
+  } else {
+    let blog = new Blog({
+      title,
+      des,
+      banner,
+      content,
+      tags,
+      author: authorId,
+      draft: Boolean(draft),
+      blog_id,
     });
+
+    blog
+      .save()
+      .then((blog) => {
+        // untuk menghitung jumlah blog yang ada
+        let incrementVal = draft ? 0 : 1;
+
+        User.findOneAndUpdate(
+          { _id: authorId },
+          {
+            $inc: { "account_info.total_posts": incrementVal },
+            $push: { blogs: blog._id },
+          }
+        )
+          .then((user) => {
+            return res.status(200).json({ id: blog_id });
+          })
+          .catch((err) => {
+            return res
+              .status(500)
+              .json({ error: "gagal mengupdate total post" });
+          });
+      })
+      .catch((err) => {
+        return res.status(500).json({ error: err.message });
+      });
+  }
 });
 
 app.post("/blog", (req, res) => {
-  let { blog_id } = req.body;
+  let { blog_id, draft, mode } = req.body;
 
-  let incrementVal = 1;
+  let incrementVal = mode !== "edit" ? 1 : 0;
 
   Blog.findOneAndUpdate(
     { blog_id },
@@ -548,6 +564,12 @@ app.post("/blog", (req, res) => {
       ).catch((err) => {
         return res.status(500).json({ error: err.message });
       });
+
+      if (blog.draft && !draft) {
+        return res
+          .status(500)
+          .json({ error: "Anda tidak dapat mengakses draf blog!" });
+      }
 
       return res.status(200).json({ blog });
     })

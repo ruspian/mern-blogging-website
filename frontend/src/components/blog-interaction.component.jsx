@@ -41,7 +41,7 @@ const BlogInteractionComponent = () => {
         <div className="flex gap-6 items-center">
           {username === author_username ? (
             <Link
-              to={`/edit/${blog_id}`}
+              to={`/editor/${blog_id}`}
               className="underline text-sm hover:text-twitter"
             >
               Edit Blog
