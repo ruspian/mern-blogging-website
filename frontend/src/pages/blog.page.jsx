@@ -24,9 +24,10 @@ export const BlogContext = createContext({});
 const BlogPage = () => {
   let { blog_id } = useParams();
 
-  let [blog, setBlog] = useState(blogDataStructure);
-  let [similarBlogs, setSimilarBlogs] = useState(null);
-  let [loading, setLoading] = useState(true);
+  const [blog, setBlog] = useState(blogDataStructure);
+  const [similarBlogs, setSimilarBlogs] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isLike, setIsLike] = useState(false);
 
   let {
     title,
@@ -84,7 +85,7 @@ const BlogPage = () => {
       {loading ? (
         <Loader />
       ) : (
-        <BlogContext.Provider value={{ blog, setBlog }}>
+        <BlogContext.Provider value={{ blog, setBlog, isLike, setIsLike }}>
           <div className="max-w-[900px] center py-10 max-lg:px-[5vw]">
             <img src={banner} className="aspevt-video" />
 
