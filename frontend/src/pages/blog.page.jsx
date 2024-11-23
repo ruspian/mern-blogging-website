@@ -7,6 +7,7 @@ import { tanggal } from "../common/date";
 import BlogInteractionComponent from "../components/blog-interaction.component";
 import BlogPostCardComponent from "../components/blog-post.component";
 import BlogContentComponent from "../components/blog-content.component";
+import CommentsContainer from "../components/comments.component";
 
 export const blogDataStructure = {
   title: "",
@@ -28,6 +29,8 @@ const BlogPage = () => {
   const [similarBlogs, setSimilarBlogs] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isLike, setIsLike] = useState(false);
+  const [commentsWrapper, setCommentsWrapper] = useState(false);
+  const [totalCommentsLoaded, setTotalCommentsLoaded] = useState(0);
 
   let {
     title,
@@ -74,10 +77,14 @@ const BlogPage = () => {
     fetchBlog();
   }, []);
 
+
   const resetState = () => {
     setBlog(blogDataStructure);
     setSimilarBlogs(null);
     setLoading(true);
+    setIsLike(false);
+    setCommentsWrapper(false);
+    setTotalCommentsLoaded(0);
   };
 
   return (
@@ -85,7 +92,10 @@ const BlogPage = () => {
       {loading ? (
         <Loader />
       ) : (
-        <BlogContext.Provider value={{ blog, setBlog, isLike, setIsLike }}>
+        <BlogContext.Provider value={{ blog, setBlog, isLike, setIsLike, commentsWrapper, setCommentsWrapper, totalCommentsLoaded, setTotalCommentsLoaded }}>
+
+          <CommentsContainer />
+
           <div className="max-w-[900px] center py-10 max-lg:px-[5vw]">
             <img src={banner} className="aspevt-video" />
 

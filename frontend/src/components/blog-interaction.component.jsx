@@ -16,7 +16,7 @@ const BlogInteractionComponent = () => {
         personal_info: { username: author_username },
       },
     },
-    setBlog, isLike, setIsLike,
+    setBlog, isLike, setIsLike, setCommentsWrapper,
   } = useContext(BlogContext);
 
   let {
@@ -79,7 +79,7 @@ const BlogInteractionComponent = () => {
           </button>
           <p className="text-xl text-dark-grey">{total_likes}</p>
 
-          <button className="w-10 h-10 rounded-full flex items-center justify-center bg-grey">
+          <button onClick={() => setCommentsWrapper(commentsWrapper => !commentsWrapper)} className="w-10 h-10 rounded-full flex items-center justify-center bg-grey">
             <i className="fi fi-rr-message-quote"></i>
           </button>
           <p className="-dartext-dark-grey-xl text-dark-grey">
