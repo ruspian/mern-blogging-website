@@ -635,21 +635,25 @@ app.post("/isliked-by-user", verifyJWT, (req, res) => {
 app.post("/komentar", verifyJWT, (req, res) => {
   let user_id = req.user;
 
-  let { _id, comment, blog_author } = req.body;
+  let { _id, comment, blog_author, replying_to } = req.body;
 
   if (!comment.length) {
     return res.status(500).json({ error: "Tuliskan Komentar anda!" });
   }
 
   // buat komen doc
-  let commentObject = new Comment({
+  let commentObject = {
     blog_id: _id,
     blog_author,
     comment,
     commented_by: user_id,
-  });
+  };
 
-  commentObject.save().then((commentFile) => {
+  if (replying_to) {
+    commentObject.parent = replying_to;
+  }
+
+  new Comment(commentObject).save().then(async (commentFile) => {
     let { comment, commentedAt, children } = commentFile;
 
     Blog.findOneAndUpdate(
@@ -658,7 +662,7 @@ app.post("/komentar", verifyJWT, (req, res) => {
         $push: { comments: commentFile._id },
         $inc: {
           "activity.total_comments": 1,
-          "activity.total_parent_comments": 1,
+          "activity.total_parent_comments": replying_to ? 0 : 1,
         },
       }
     ).then((blog) => {
@@ -666,12 +670,23 @@ app.post("/komentar", verifyJWT, (req, res) => {
     });
 
     let notificationObject = {
-      type: "comment",
+      type: replying_to ? "reply" : "comment",
       blog: _id,
       notification_for: blog_author,
       user: user_id,
       comment: commentFile._id,
     };
+
+    if (replying_to) {
+      notificationObject.replied_on_comment = replying_to;
+
+      await Comment.findOneAndUpdate(
+        { _id: replying_to },
+        { $push: { children: commentFile._id } }
+      ).then((replyingToCommentDoc) => {
+        notificationObject.notification_for = replyingToCommentDoc.commented_by;
+      });
+    }
 
     new Notification(notificationObject)
       .save()
