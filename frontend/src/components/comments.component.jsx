@@ -33,10 +33,17 @@ export const fetchComments = async ({ skip = 0, blog_id, setParentCommentsCountF
 
 const CommentsContainer = () => {
 
-    let { blog: { title, comments: { result: commentsArray } }, commentsWrapper, setCommentsWrapper } = useContext(BlogContext);
+    let { blog, blog: { _id, title, comments: { result: commentsArray }, activity: { total_parent_comments } }, commentsWrapper, setCommentsWrapper, totalCommentsLoaded, setTotalCommentsLoaded, setBlog } = useContext(BlogContext);
 
     // console.log(commentsWrapper);
     // console.log(commentsArray);
+
+
+    const loadMoreComment = async () => {
+        let newCommentsArray = await fetchComments({ skip: totalCommentsLoaded, blog_id: _id, setParentCommentsCountFunc: setTotalCommentsLoaded, comment_array: commentsArray });
+
+        setBlog({ ...blog, comments: newCommentsArray })
+    }
 
 
     return (
@@ -63,6 +70,13 @@ const CommentsContainer = () => {
                             <CommentsCardComponent index={index} leftVal={comment.childrenLevel * 4} commentData={comment} />
                         </AnimationWrapper>
                     }) : <NoDataMessageComponent message="Belum ada komentar!" />
+            }
+
+            {
+                total_parent_comments > totalCommentsLoaded ?
+                    <button onClick={loadMoreComment} className="textdatk-grey p-2 px-3 hover:bg-grey/30 rounded-md flex items-center gap-2">Muat Lebih Banyak</button>
+                    :
+                    ""
             }
 
         </div>
