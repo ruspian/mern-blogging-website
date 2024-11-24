@@ -2,6 +2,9 @@ import { useContext } from "react";
 import { BlogContext } from "../pages/blog.page";
 import CommentsField from "./comment-field.component";
 import axios from "axios";
+import NoDataMessageComponent from "./nodata.component";
+import AnimationWrapper from "../common/page-animation";
+import CommentsCardComponent from "./comment-card.component";
 
 
 export const fetchComments = async ({ skip = 0, blog_id, setParentCommentsCountFunc, comment_array = null }) => {
@@ -30,9 +33,11 @@ export const fetchComments = async ({ skip = 0, blog_id, setParentCommentsCountF
 
 const CommentsContainer = () => {
 
-    let { blog: { title }, commentsWrapper, setCommentsWrapper } = useContext(BlogContext);
+    let { blog: { title, comments: { result: commentsArray } }, commentsWrapper, setCommentsWrapper } = useContext(BlogContext);
 
     // console.log(commentsWrapper);
+    // console.log(commentsArray);
+
 
     return (
         <div className={"max-sm:w-full fixed " + (commentsWrapper ? "top-0 sm:right-0" : "top-[100%] sm:right-[-100%]") + " duration-700 max-sm:right-0 top-0 w-[30%] min-w-[350px] h-full z-50 bg-white shadow-2xl p-8 px-16 overflow-auto overflow-x-hidden"}>
@@ -50,6 +55,15 @@ const CommentsContainer = () => {
             <hr className="border-grey my-8 w-[120%] -ml-10" />
 
             <CommentsField action="Kirim Komentar" />
+
+            {
+                commentsArray && commentsArray.length ?
+                    commentsArray.map((comment, index) => {
+                        return <AnimationWrapper key={index} transition={{ duration: 1, delay: index * 0.1 }}>
+                            <CommentsCardComponent index={index} leftVal={comment.childrenLevel * 4} commentData={comment} />
+                        </AnimationWrapper>
+                    }) : <NoDataMessageComponent message="Belum ada komentar!" />
+            }
 
         </div>
     )

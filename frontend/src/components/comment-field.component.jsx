@@ -7,7 +7,7 @@ import { BlogContext } from "../pages/blog.page";
 const CommentsField = ({ action }) => {
 
     let { userAuth: { access_token, username, fullname, profile_img } } = useContext(UserContext)
-    let { blog, blog: { _id, author: { _id: blog_author }, comments, activity, activity: { total_comments, total_parent_comments } }, setBlog, setTotalCommentsLoaded } = useContext(BlogContext);
+    let { blog, blog: { _id, author: { _id: blog_author }, comments, comments: { result: commentsArray }, activity, activity: { total_comments, total_parent_comments } }, setBlog, setTotalCommentsLoaded } = useContext(BlogContext);
 
     const [comment, setComment] = useState("");
 
@@ -29,7 +29,7 @@ const CommentsField = ({ action }) => {
             .then(({ data }) => {
                 setComment("");
 
-                data.commeted_by = {
+                data.commented_by = {
                     personal_info: {
                         username,
                         profile_img,
@@ -40,13 +40,13 @@ const CommentsField = ({ action }) => {
                 let newCommentArray;
                 data.childrenLevel = 0;
 
-                newCommentArray = [data];
+                newCommentArray = [data, ...commentsArray];
 
-                let parentCimmentIncrementVal = 1;
+                let parentCommentIncrementVal = 1;
 
-                setBlog({ ...blog, comment: { ...comments, result: newCommentArray }, activity: { ...activity, total_comments: total_comments + 1, total_parent_comments: total_parent_comments + parentCimmentIncrementVal } })
+                setBlog({ ...blog, comments: { ...comments, result: newCommentArray }, activity: { ...activity, total_comments: total_comments + 1, total_parent_comments: total_parent_comments + parentCommentIncrementVal } })
 
-                setTotalCommentsLoaded(preVal => preVal + parentCimmentIncrementVal)
+                setTotalCommentsLoaded(preVal => preVal + parentCommentIncrementVal)
 
 
             }).then(err => {
