@@ -656,7 +656,7 @@ app.post("/komentar", verifyJWT, (req, res) => {
       { _id },
       {
         $push: { comments: commentFile._id },
-        $inc: { "activitu.total_comments": 1 },
+        $inc: { "activity.total_comments": 1 },
         "activity.total_parent_comments": 1,
       }
     ).then((blog) => {
@@ -679,6 +679,26 @@ app.post("/komentar", verifyJWT, (req, res) => {
       .status(200)
       .json({ comment, commentedAt, _id: commentFile._id, user_id, children });
   });
+});
+
+app.post("/blog-komentar", (req, res) => {
+  let { blog_id, skip } = req.body;
+  let maxLimit = 5;
+
+  Comment.find({ blog_id, isReply: false })
+    .populate(
+      "commented_by",
+      "personal_info.username personal_info.fullname personal_info.profile_img"
+    )
+    .skip(skip)
+    .limit(maxLimit)
+    .sort({ commentedAt: -1 })
+    .then((comment) => {
+      return res.status(200).json(comment);
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: err.message });
+    });
 });
 
 // jalankan server

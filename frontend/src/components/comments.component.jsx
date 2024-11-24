@@ -1,6 +1,32 @@
 import { useContext } from "react";
 import { BlogContext } from "../pages/blog.page";
 import CommentsField from "./comment-field.component";
+import axios from "axios";
+
+
+export const fetchComments = async ({ skip = 0, blog_id, setParentCommentsCountFunc, comment_array = null }) => {
+
+    let res;
+
+    await axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/blog-komentar", { skip, blog_id }).then(({ data }) => {
+        data.map(comment => {
+            comment.childrenLevel = 0;
+        })
+
+        setParentCommentsCountFunc(preVal => preVal + data.length);
+
+        if (comment_array === null) {
+            res = { result: data };
+        } else {
+            res = { result: [...comment_array, ...data] }
+        }
+
+
+    })
+
+    return res;
+
+}
 
 const CommentsContainer = () => {
 

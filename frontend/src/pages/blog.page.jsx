@@ -7,7 +7,7 @@ import { tanggal } from "../common/date";
 import BlogInteractionComponent from "../components/blog-interaction.component";
 import BlogPostCardComponent from "../components/blog-post.component";
 import BlogContentComponent from "../components/blog-content.component";
-import CommentsContainer from "../components/comments.component";
+import CommentsContainer, { fetchComments } from "../components/comments.component";
 
 export const blogDataStructure = {
   title: "",
@@ -43,11 +43,18 @@ const BlogPage = () => {
   } = blog;
 
   const fetchBlog = () => {
+
+
+
     axios
       .post(import.meta.env.VITE_SERVER_DOMAIN + "/blog", { blog_id })
-      .then(({ data: { blog } }) => {
+      .then(async ({ data: { blog } }) => {
+
+        blog.comments = await fetchComments({ blog_id: blog._id, setParentCommentsCountFunc: setTotalCommentsLoaded });
+
         setBlog(blog);
         // console.log(blog.content);
+        // console.log(blog);
 
         axios
           .post(import.meta.env.VITE_SERVER_DOMAIN + "/cari-blog", {
