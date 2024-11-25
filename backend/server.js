@@ -651,6 +651,7 @@ app.post("/komentar", verifyJWT, (req, res) => {
 
   if (replying_to) {
     commentObject.parent = replying_to;
+    commentObject.isReply = true;
   }
 
   new Comment(commentObject).save().then(async (commentFile) => {
@@ -712,6 +713,35 @@ app.post("/blog-komentar", (req, res) => {
     .sort({ commentedAt: -1 })
     .then((comment) => {
       return res.status(200).json(comment);
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: err.message });
+    });
+});
+
+app.post("/balas-komentar", (req, res) => {
+  let { _id, skip } = req.body;
+
+  let maxLimit = 5;
+
+  Comment.findOne({ _id })
+    .populate({
+      path: "children",
+      option: {
+        limit: maxLimit,
+        skip: skip,
+        sort: { commentedAt: -1 },
+      },
+      populate: {
+        path: "commented_by",
+        select:
+          "personal_info.username personal_info.fullname personal_info.profile_img",
+      },
+      select: "-blog_id -updatedAt",
+    })
+    .select("children")
+    .then((doc) => {
+      return res.status(200).json({ replies: doc.children });
     })
     .catch((err) => {
       return res.status(500).json({ error: err.message });

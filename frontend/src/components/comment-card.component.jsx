@@ -4,18 +4,21 @@ import { UserContext } from "../App";
 import toast from "react-hot-toast";
 import CommentsField from "./comment-field.component";
 import { BlogContext } from "../pages/blog.page";
+import axios from "axios";
 
 const CommentsCardComponent = ({ index, leftVal, commentData }) => {
 
-    let { commented_by: { personal_info: { fullname, username, profile_img } }, commentedAt, comment, _id } = commentData;
+    let { commented_by: { personal_info: { fullname, username, profile_img } }, commentedAt, comment, _id, children } = commentData;
 
-    let { blog, blog: { comments: { result: commentsArray } }, setBlog } = useContext(BlogContext);
+    let { blog, blog: { comments, comments: { result: commentsArray } }, setBlog } = useContext(BlogContext);
 
     let { userAuth: { access_token } } = useContext(UserContext)
 
     const [isReplying, setIsReplying] = useState(false);
 
 
+
+    // fungsi sembunyikan balasan komentar
     const removeCommentCards = (startingPoint) => {
 
         if (commentsArray[startingPoint]) {
@@ -35,12 +38,40 @@ const CommentsCardComponent = ({ index, leftVal, commentData }) => {
     }
 
 
+    const loadReplies = ({ skip = 0 }) => {
+
+        if (children.length) {
+            handleHideComments();
+
+            axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/balas-komentar", { _id, skip })
+                .then(({ data: { replies } }) => {
+                    console.log(replies);
+
+                    commentData.isReplyLoaded = true;
+
+                    for (let i = 0; i < replies.length; i++) {
+                        replies[i].childrenLevel = commentData.childrenLevel + 1;
+
+                        commentsArray.splice(index + 1 + i + skip, 0, replies[i]);
+                    }
+
+                    setBlog({ ...blog, comments: { ...comments, result: commentsArray } })
+                }).catch(err => {
+                    console.log(err);
+                })
+        }
+    }
+
+
+    // fungsi sembunyikan komentar
     const handleHideComments = () => {
         commentData.isReplyLoaded = false;
 
         removeCommentCards(index + 1)
     }
 
+
+    // fungsi balas komentar
     const handleReply = () => {
         if (!access_token) {
             return toast.error("Silahkan login dahulu!");
@@ -75,7 +106,12 @@ const CommentsCardComponent = ({ index, leftVal, commentData }) => {
                                 Sembunyikan
                             </button>
                             :
-                            ""
+                            <button
+                                onClick={loadReplies}
+                                className="text-dark-grey p-2 px-3 hover:bg-grey/30 rounded-md flex items-center gap-2">
+                                <i className="fi fi-br-comment-alt-minus"></i>
+                                {children.length} Balasan
+                            </button>
                     }
 
                     <button className="underline" onClick={handleReply}>Balas</button>
