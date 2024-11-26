@@ -8,18 +8,34 @@ import axios from "axios";
 
 const CommentsCardComponent = ({ index, leftVal, commentData }) => {
 
-    let { commented_by: { personal_info: { fullname, username, profile_img } }, commentedAt, comment, _id, children } = commentData;
+    let { commented_by: { personal_info: { fullname, username: commented_by_username, profile_img } }, commentedAt, comment, _id, children } = commentData;
 
-    let { blog, blog: { comments, comments: { result: commentsArray } }, setBlog } = useContext(BlogContext);
+    let { blog, blog: { comments, activity, activity: { total_parent_comments }, comments: { result: commentsArray }, author: { personal_info: { username: blog_author } } }, setBlog, setTotalCommentsLoaded } = useContext(BlogContext);
 
-    let { userAuth: { access_token } } = useContext(UserContext)
+    let { userAuth: { access_token, username } } = useContext(UserContext)
 
     const [isReplying, setIsReplying] = useState(false);
 
 
 
+    const getParentIndex = () => {
+        let startingPoint = index - 1;
+
+        try {
+            while (commentsArray[startingPoint].childrenLevel >= commentData.childrenLevel) {
+                startingPoint--;
+            }
+        } catch {
+            startingPoint = undefined;
+        }
+
+        return startingPoint;
+        // console.log(startingPoint);
+    }
+
+
     // fungsi sembunyikan balasan komentar
-    const removeCommentCards = (startingPoint) => {
+    const removeCommentCards = (startingPoint, isDelete = false) => {
 
         if (commentsArray[startingPoint]) {
             while (commentsArray[startingPoint].childrenLevel > commentData.childrenLevel) {
@@ -29,11 +45,30 @@ const CommentsCardComponent = ({ index, leftVal, commentData }) => {
                     break;
                 }
             }
-
-
         }
 
-        setBlog({ ...blog, comments: { result: commentsArray } })
+        if (isDelete) {
+            let parentIndex = getParentIndex();
+
+            if (parentIndex !== undefined) {
+                commentsArray[parentIndex].children = commentsArray[parentIndex].children.filter(child => child !== _id);
+
+                if (!commentsArray[parentIndex].children.length) {
+                    commentsArray[parentIndex].isReplyLoaded = false;
+                }
+            }
+
+            commentsArray.splice(index, 1);
+        }
+
+        if (commentData.childrenLevel === 0 && isDelete) {
+            setTotalCommentsLoaded(preVal => preVal - 1);
+        }
+
+        setBlog({
+            ...blog, comments: { result: commentsArray },
+            activity: { ...activity, total_parent_comments: total_parent_comments - (commentData.childrenLevel === 0 && isDelete ? 1 : 0) }
+        })
 
     }
 
@@ -45,7 +80,6 @@ const CommentsCardComponent = ({ index, leftVal, commentData }) => {
 
             axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/balas-komentar", { _id, skip })
                 .then(({ data: { replies } }) => {
-                    console.log(replies);
 
                     commentData.isReplyLoaded = true;
 
@@ -60,6 +94,31 @@ const CommentsCardComponent = ({ index, leftVal, commentData }) => {
                     console.log(err);
                 })
         }
+    }
+
+
+    const deleteComment = (event) => {
+        // buat tombol hanya bisa di klik sekali
+        event.target.setAttribute("disabled", true);
+
+        // console.log(blog_author);
+
+
+        axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/hapus-komentar",
+            { _id },
+            {
+                headers: {
+                    Authorization: `Bearer ${access_token}`
+                }
+            }).then(() => {
+
+                event.target.removeAttribute("disabled");
+
+                removeCommentCards(index + 1, true);
+
+            }).catch(err => {
+                console.log(err);
+            })
     }
 
 
@@ -89,7 +148,7 @@ const CommentsCardComponent = ({ index, leftVal, commentData }) => {
             <div className="my-5 p-6 rounded-md border border-grey">
                 <div className="flex gap-3 items-center mb-8">
                     <img src={profile_img} className="w-6 h-6 rounded-full " />
-                    <p className="line-clamp-1">{fullname} @{username}</p>
+                    <p className="line-clamp-1">{fullname} @{commented_by_username}</p>
                     <p className="min-w-fit text-sm">{tanggal(commentedAt)}</p>
                 </div>
 
@@ -114,7 +173,23 @@ const CommentsCardComponent = ({ index, leftVal, commentData }) => {
                             </button>
                     }
 
-                    <button className="underline" onClick={handleReply}>Balas</button>
+                    <button
+                        className="text-dark-grey p-2 px-3 hover:bg-grey/30 rounded-md hover:underline flex items-center gap-2"
+                        onClick={handleReply}>
+                        Balas
+                    </button>
+
+                    {
+                        username === commented_by_username || username === blog_author ?
+                            // tombol hapus
+                            <button
+                                className="text-black p-2 px-3 ml-auto hover:bg-red/30 hover:text-red rounded-md border border-grey flex items-center gap-2"
+                                onClick={deleteComment}>
+                                <i className="fi fi-br-trash pointer-events-none"></i>
+                            </button>
+                            :
+                            ""
+                    }
                 </div>
 
                 {

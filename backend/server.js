@@ -748,6 +748,65 @@ app.post("/balas-komentar", (req, res) => {
     });
 });
 
+const hapusKomentar = (_id) => {
+  Comment.findOneAndDelete({ _id })
+    .then((comment) => {
+      if (comment.parent) {
+        Comment.findOneAndUpdate(
+          { _id: comment.parent },
+          { $pull: { children: _id } }
+        )
+          .then((data) => console.log("komentar berhasil dihapus!"))
+          .catch((err) => console.log(err));
+      }
+
+      Notification.findOneAndDelete({ comment: _id }).then((notification) =>
+        console.log("notifikasi berhasil dihapus!")
+      );
+
+      Notification.findOneAndDelete({ reply: _id }).then((notification) =>
+        console.log("Balasan berhasil dihapus!")
+      );
+
+      Blog.findOneAndUpdate(
+        { _id: comment.blog_id },
+        {
+          $pull: { comments: _id },
+          $inc: {
+            "activity.total_comments": -1,
+          },
+          "activity.total_parent_comments": comment.parent ? 0 : -1,
+        }
+      ).then((blog) => {
+        if (comment.children.length) {
+          comment.children.map((replies) => {
+            hapusKomentar(replies);
+          });
+        }
+      });
+    })
+    .catch((err) => console.log(err.message));
+};
+
+app.post("/hapus-komentar", verifyJWT, (req, res) => {
+  let user_id = req.user;
+
+  let { _id } = req.body;
+
+  Comment.findOne({ _id }).then((comment) => {
+    // console.log("user_id:", user_id);
+    // console.log("comment.commented_by:", comment.commented_by);
+    // console.log("comment.blog_author:", comment.blog_author);
+
+    if (user_id == comment.commented_by || user_id == comment.blog_author) {
+      hapusKomentar(_id);
+      return res.status(200).json({ status: "Komentar berhasil dihapus!" });
+    } else {
+      return res.status(403).json({ error: "Hapus komentar gagal!" });
+    }
+  });
+});
+
 // jalankan server
 app.listen(PORT, () => {
   console.log(`Server is running on port http://localhost:${PORT}`);
