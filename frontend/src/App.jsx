@@ -10,6 +10,7 @@ import PageNotFound from "./pages/404.page";
 import ProfilPage from "./pages/profile.page";
 import BlogPage from "./pages/blog.page";
 import SideNavbar from "./components/sidenavbar.component";
+import ChangePasswordPage from "./pages/change-password.page";
 
 // membuat global context untuk mengelolah data
 export const UserContext = createContext({});
@@ -35,7 +36,7 @@ const App = () => {
           <Route index element={<HomePage />} />
           <Route path="setting" element={<SideNavbar />}>
             <Route path="edit-profile" element={<h1>ini adalah halaman edit profile</h1>} />
-            <Route path="ubah-password" element={<h1>ini adalah halaman ubah password</h1>} />
+            <Route path="ubah-password" element={<ChangePasswordPage />} />
           </Route>
           <Route path="signin" element={<UserAuthForm type="sign-in" />} />
           <Route path="signup" element={<UserAuthForm type="sign-up" />} />

@@ -310,6 +310,73 @@ app.post("/google-auth", async (req, res) => {
     });
 });
 
+app.post("/ubah-password", verifyJWT, (req, res) => {
+  let { passwordSaatIni, passwordBaru } = req.body;
+
+  // validasi jika password tidak sesuai regex
+  if (
+    !passwordRegex.test(passwordSaatIni) ||
+    !passwordRegex.test(passwordBaru)
+  ) {
+    return res.status(403).json({
+      error:
+        "Password Harus Minimal 6 - 20 Karakter! Dengan Huruf Besar, Huruf Kecil, dan Angka!",
+    });
+  }
+
+  User.findOne({ _id: req.user })
+    .then((user) => {
+      // validasi password yang login dengan google
+      if (user.google_auth) {
+        return res.status(403).json({
+          error:
+            "Maaf pengguna yang login dengan Google tidak bisa mengubah password!",
+        });
+      }
+
+      // menyocokkan password dengan hasil hash untuk login
+      bcrypt.compare(
+        passwordSaatIni,
+        user.personal_info.password,
+        (err, result) => {
+          if (err) {
+            return res.status(403).json({
+              error: "terjadi Kesalahan Saat Mengubah Password, Coba Lagi!",
+            });
+          }
+
+          if (!result) {
+            return res
+              .status(403)
+              .json({ error: "Password yang anda masukkan salah!" });
+          }
+
+          // membuat password baru
+          bcrypt.hash(passwordBaru, 10, (err, hashed_password) => {
+            // update password database
+            User.findOneAndUpdate(
+              { _id: req.user },
+              { "personal_info.password": hashed_password }
+            )
+              .then((u) => {
+                return res.status(200).json({
+                  message: "Password Berhasil Diubah!",
+                });
+              })
+              .catch((err) => {
+                return res.status(500).json({
+                  error: "Terjadi kesalahan saat mengubah password, Coba lagi",
+                });
+              });
+          });
+        }
+      );
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: "User tidak ditemukan" });
+    });
+});
+
 app.post("/blog-terbaru", (req, res) => {
   let { page } = req.body;
 
