@@ -59,6 +59,16 @@ const storage = multer.diskStorage({
   },
 });
 
+const storageProfil = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploads/profil/");
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
 // Filter file yang diunggah
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
@@ -71,6 +81,12 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({
   storage: storage,
+  fileFilter: fileFilter,
+  limits: { fileSize: 2 * 1024 * 1024 }, // Maksimal 2MB
+});
+
+const uploadProfil = multer({
+  storage: storageProfil,
   fileFilter: fileFilter,
   limits: { fileSize: 2 * 1024 * 1024 }, // Maksimal 2MB
 });
@@ -137,6 +153,29 @@ app.post("/image-url", upload.single("image"), async (req, res) => {
     fileName: req.file.filename,
   });
 });
+
+app.post(
+  "/profil-image-url",
+  uploadProfil.single("image"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Tidak ada gambar yang diunggah" });
+      }
+
+      const filePath = `/uploads/profil/${req.file.filename}`;
+      res.json({
+        success: true,
+        filePath,
+        fileName: req.file.filename,
+      });
+    } catch (err) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  }
+);
 
 // route
 app.post("/signup", (req, res) => {
@@ -511,6 +550,93 @@ app.post("/profil", (req, res) => {
       return res.status(200).json(user);
     })
     .catch((err) => {
+      return res.status(500).json({ error: err.message });
+    });
+});
+
+app.post("/change-image-profil", verifyJWT, async (req, res) => {
+  let { url } = req.body;
+
+  if (!url) {
+    return res
+      .status(400)
+      .json({ success: false, message: "URL gambar tidak boleh kosong" });
+  }
+
+  try {
+    const user = await User.findOneAndUpdate(
+      { _id: req.user },
+      { "personal_info.profile_img": url }
+    );
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Pengguna tidak ditemukan" });
+    }
+
+    res.status(200).json({ success: true, profile_img: url });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post("/update-profil", verifyJWT, (req, res) => {
+  // console.log("Data yang diterima:", req.body);
+
+  let bioLimit = 150;
+  let { username, bio, social_links } = req.body;
+
+  if (username < 3) {
+    return res.status(403).json({ error: "Username minimal 3 karakter" });
+  }
+
+  if (bio.length > bioLimit) {
+    return res.status(403).json({ error: "Bio maximal 150 karakter" });
+  }
+
+  let socialLinksArray = Object.keys(social_links);
+
+  try {
+    for (let i = 0; i < socialLinksArray.length; i++) {
+      if (social_links[socialLinksArray[i]].length) {
+        let hostname = new URL(social_links[socialLinksArray[i]]).hostname;
+
+        if (
+          !hostname.includes(`${socialLinksArray[i]}.com`) &&
+          socialLinksArray[i] !== "website"
+        ) {
+          return res.status(403).json({
+            error: `${socialLinksArray[i]} tidak valid, contoh: http(s)://${socialLinksArray[i]}.com`,
+          });
+        }
+      }
+    }
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ error: "URL tidak valid, gunakan http(s)://" });
+  }
+
+  // Objek update
+  let updateObject = {
+    "personal_info.username": username,
+    "personal_info.bio": bio,
+    social_links,
+  };
+
+  User.findOneAndUpdate({ _id: req.user }, updateObject, {
+    runValidators: true,
+  })
+    .then(() => {
+      return res.status(200).json({ username });
+    })
+    .catch((err) => {
+      // console.error("Error saat update profil:", err);
+      if (err.code == 11000) {
+        return res.status(409).json({ error: "Username sudah digunakan" });
+      }
+
       return res.status(500).json({ error: err.message });
     });
 });
