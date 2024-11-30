@@ -4,7 +4,7 @@ import { UserContext } from "../App";
 
 const SideNavbar = () => {
 
-    let { userAuth: { access_token } } = useContext(UserContext);
+    let { userAuth: { access_token, notifikasi_baru } } = useContext(UserContext);
 
     let page = location.pathname.split("/")[2];
 
@@ -77,7 +77,16 @@ const SideNavbar = () => {
                                 onClick={(event) => setPageState(event.target.innerText)}
                                 className="sidebar-link"
                             >
-                                <i className="fi fi-bs-bells"></i>
+                                <div className="relative">
+                                    <i className="fi fi-bs-bells"></i>
+
+                                    {
+                                        notifikasi_baru ?
+                                            <span className="bg-red w-2 h-2 rounded-full absolute z-10 top-1 -right-1"></span>
+                                            :
+                                            ""
+                                    }
+                                </div>
                                 Notifikasi
 
                             </NavLink>

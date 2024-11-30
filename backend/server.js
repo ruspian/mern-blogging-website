@@ -1000,6 +1000,28 @@ app.post("/hapus-komentar", verifyJWT, (req, res) => {
   });
 });
 
+app.get("/notifikasi-baru", verifyJWT, (req, res) => {
+  let user_id = req.user;
+
+  Notification.exists({
+    notification_for: user_id,
+    seen: false,
+    user: { $ne: user_id },
+  })
+    .then((result) => {
+      if (result) {
+        return res.status(200).json({ notifikasi_baru: true });
+      } else {
+        return res.status(200).json({ notifikasi_baru: false });
+      }
+    })
+    .catch((err) => {
+      console.log(err.message);
+
+      return res.status(500).json({ error: err.message });
+    });
+});
+
 // jalankan server
 app.listen(PORT, () => {
   console.log(`Server is running on port http://localhost:${PORT}`);
