@@ -828,7 +828,7 @@ app.post("/isliked-by-user", verifyJWT, (req, res) => {
 app.post("/komentar", verifyJWT, (req, res) => {
   let user_id = req.user;
 
-  let { _id, comment, blog_author, replying_to } = req.body;
+  let { _id, comment, blog_author, replying_to, notification_id } = req.body;
 
   if (!comment.length) {
     return res.status(500).json({ error: "Tuliskan Komentar anda!" });
@@ -880,6 +880,13 @@ app.post("/komentar", verifyJWT, (req, res) => {
       ).then((replyingToCommentDoc) => {
         notificationObject.notification_for = replyingToCommentDoc.commented_by;
       });
+
+      if (notification_id) {
+        Notification.findOneAndUpdate(
+          { _id: notification_id },
+          { reply: commentFile._id }
+        ).then((notification) => console.log("Notifikasi diupdate!"));
+      }
     }
 
     new Notification(notificationObject)
@@ -957,9 +964,10 @@ const hapusKomentar = (_id) => {
         console.log("notifikasi berhasil dihapus!")
       );
 
-      Notification.findOneAndDelete({ reply: _id }).then((notification) =>
-        console.log("Balasan berhasil dihapus!")
-      );
+      Notification.findOneAndUpdate(
+        { reply: _id },
+        { $unset: { reply: 1 } }
+      ).then((notification) => console.log("Balasan berhasil dihapus!"));
 
       Blog.findOneAndUpdate(
         { _id: comment.blog_id },
@@ -1018,6 +1026,75 @@ app.get("/notifikasi-baru", verifyJWT, (req, res) => {
     .catch((err) => {
       console.log(err.message);
 
+      return res.status(500).json({ error: err.message });
+    });
+});
+
+app.post("/notifikasi", verifyJWT, (req, res) => {
+  let user_id = req.user;
+  let { page, filter, deletedDocCount } = req.body;
+  let maxLimit = 10;
+
+  let findQuery = {
+    notification_for: user_id,
+    user: { $ne: user_id },
+  };
+
+  let skipDocs = (page - 1) * maxLimit;
+
+  if (filter !== "all") {
+    findQuery.type = filter;
+  }
+
+  if (deletedDocCount) {
+    skipDocs -= deletedDocCount;
+  }
+
+  Notification.find(findQuery)
+    .skip(skipDocs)
+    .limit(maxLimit)
+    .populate("blog", "title blog_id")
+    .populate(
+      "user",
+      "personal_info.username personal_info.fullname personal_info.profile_img"
+    )
+    .populate("comment", "comment")
+    .populate("replied_on_comment", "comment")
+    .populate("reply", "comment")
+    .sort({ createdAt: -1 })
+    .select("createdAt type seen reply")
+    .then((notifications) => {
+      Notification.updateMany(findQuery, { seen: true })
+        .skip(skipDocs)
+        .limit(maxLimit)
+        .then(() => console.log("Notifikasi dilihat!"));
+
+      return res.status(200).json({ notifications });
+    })
+    .catch((err) => {
+      console.log(err.message);
+      return res.status(500).json({ error: err.message });
+    });
+});
+
+app.post("/semua-notifikasi", verifyJWT, (req, res) => {
+  let user_id = req.user;
+  let { filter } = req.body;
+  let findQuery = {
+    notification_for: user_id,
+    user: { $ne: user_id },
+  };
+
+  if (filter !== "all") {
+    findQuery.type = filter;
+  }
+
+  Notification.countDocuments(findQuery)
+    .then((count) => {
+      return res.status(200).json({ totalDocs: count });
+    })
+    .catch((err) => {
+      console.log(err.message);
       return res.status(500).json({ error: err.message });
     });
 });

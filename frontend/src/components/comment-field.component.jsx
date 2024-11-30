@@ -67,7 +67,7 @@ const CommentsField = ({ action, index = undefined, replyingTo = undefined, setI
                 setTotalCommentsLoaded(preVal => preVal + parentCommentIncrementVal)
 
 
-            }).then(err => {
+            }).catch(err => {
                 console.log(err);
             })
 

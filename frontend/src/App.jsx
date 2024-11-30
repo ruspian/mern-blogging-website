@@ -12,6 +12,7 @@ import BlogPage from "./pages/blog.page";
 import SideNavbar from "./components/sidenavbar.component";
 import ChangePasswordPage from "./pages/change-password.page";
 import EditProfilPage from "./pages/edit-profile.page";
+import NotificationPage from "./pages/notifications.page";
 
 // membuat global context untuk mengelolah data
 export const UserContext = createContext({});
@@ -35,6 +36,9 @@ const App = () => {
         <Route path="editor/:blog_id" element={<EditorPage />} />
         <Route path="/" element={<Navbar />}>
           <Route index element={<HomePage />} />
+          <Route path="dashboard" element={<SideNavbar />}>
+            <Route path="notifikasi" element={<NotificationPage />} />
+          </Route>
           <Route path="setting" element={<SideNavbar />}>
             <Route path="edit-profile" element={<EditProfilPage />} />
             <Route path="ubah-password" element={<ChangePasswordPage />} />
