@@ -14,6 +14,9 @@ const InPageNavigation = ({
 
   let [inPageNavIndex, setInPageNavIndex] = useState(defaultActiveIndex);
 
+  const [isResize, setIsResize] = useState(false);
+  const [width, setWidth] = useState(window.innerWidth);
+
   //   fungsi untuk merubah state inpage nav saat tombol di klik
   const changePageState = (btn, index) => {
     let { offsetLeft, offsetWidth } = btn;
@@ -28,8 +31,20 @@ const InPageNavigation = ({
 
   //   hook useEffect untuk merubah state inpage nav
   useEffect(() => {
-    changePageState(activeTab.current, defaultActiveIndex);
-  }, []);
+    if (width > 766 && inPageNavIndex !== defaultActiveIndex) {
+      changePageState(activeTab.current, defaultActiveIndex);
+    }
+
+    if (!isResize) {
+      window.addEventListener("resize", () => {
+        if (!isResize) {
+          setIsResize(true);
+        }
+
+        setWidth(window.innerWidth);
+      })
+    }
+  }, [width]);
 
   return (
     <>
@@ -43,8 +58,8 @@ const InPageNavigation = ({
                 (inPageNavIndex === index
                   ? "text-black "
                   : "text-dark-grey " + dafaultHidden.includes(route)
-                  ? " md:hidden "
-                  : "")
+                    ? " md:hidden "
+                    : "")
               }
               key={index}
               ref={defaultActiveIndex === index ? activeTab : null}
