@@ -60,7 +60,7 @@ const SideNavbar = () => {
                         <div
                             className={"min-w-[200px] h-[calc(100vh-80px-60px)] md:h-cover md:sticky top-24 overflow-y-auto p-6 md:pr-0 md:border-grey md:border-r absolute max-md:top-[64px] bg-white max-md:w-[calc(100%+80px)] max-md:px-16 max-md:-ml-7 duration-500 " + (!showHideNav ? "max-md:opacity-0 max-md:pointer-events-none" : "opacity-100 pointer-events-auto")}
                         >
-                            <h1 className="text-xl text-dark-grey mb-3">DashBoard</h1>
+                            <h1 className="text-xl text-dark-grey mb-3">Dashboard</h1>
                             <hr className="border-grey -ml-6 mb-8 mr-6" />
 
                             <NavLink

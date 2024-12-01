@@ -23,7 +23,7 @@ const UserNavigationPanel = () => {
     >
       {/* edit */}
       <div className="bg-white absolute right-0 border border-grey w-60 duration-200">
-        <Link to="/edit" className="flex gap-2 md:hidden pl-8 py-4">
+        <Link to="/editor" className="flex gap-2 md:hidden pl-8 py-4">
           <i className="fi fi-sr-file-edit"></i>
           <p>Buat Blog</p>
         </Link>
@@ -34,7 +34,7 @@ const UserNavigationPanel = () => {
         </Link>
 
         {/* dasboard */}
-        <Link to="/dashboard/blogs" className="link pl-8 py-4">
+        <Link to="/dashboard/blog" className="link pl-8 py-4">
           Dashboard
         </Link>
 

@@ -114,7 +114,7 @@ const PublishFormComponent = () => {
         toast.success("Blog anda berhasil dipublikasikan!");
 
         setTimeout(() => {
-          navigate("/");
+          navigate("/dashboard/blog");
         }, 500);
       })
       .catch(({ response }) => {

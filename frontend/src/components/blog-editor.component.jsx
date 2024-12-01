@@ -210,7 +210,7 @@ const EditorFormComponent = () => {
             toast.success("Berhasil menyimpan draft!");
 
             setTimeout(() => {
-              navigate("/");
+              navigate("/dashboard/blog?tab=draft");
             }, 500);
           })
           .catch(({ response }) => {
