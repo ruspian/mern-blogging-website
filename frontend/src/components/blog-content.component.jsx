@@ -1,3 +1,22 @@
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
+import 'react-syntax-highlighter/dist/esm/languages/prism/xml-doc';
+import 'react-syntax-highlighter/dist/esm/languages/prism/css';
+import 'react-syntax-highlighter/dist/esm/languages/prism/bash';
+import 'react-syntax-highlighter/dist/esm/languages/prism/json';
+import 'react-syntax-highlighter/dist/esm/languages/prism/php';
+import 'react-syntax-highlighter/dist/esm/languages/prism/python';
+import 'react-syntax-highlighter/dist/esm/languages/prism/ruby';
+import 'react-syntax-highlighter/dist/esm/languages/prism/rust';
+import 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
+import 'react-syntax-highlighter/dist/esm/languages/prism/yaml';
+import 'react-syntax-highlighter/dist/esm/languages/prism/markup';
+import 'react-syntax-highlighter/dist/esm/languages/prism/markdown';
+
+// SyntaxHighlighter.setTheme(oneDark);
+
+
 // komponent untuk menampilkan gambar
 const Img = ({ url, caption }) => {
   return (
@@ -13,6 +32,20 @@ const Img = ({ url, caption }) => {
     </div>
   );
 };
+
+const Code = ({ language, code }) => {
+
+  return (
+    <SyntaxHighlighter
+      language={language}
+      style={atomDark}
+    >
+      {code}
+    </SyntaxHighlighter>
+  );
+};
+
+
 
 // komponent untuk menampilkan quote
 const Quote = ({ quote, caption }) => {
@@ -55,6 +88,7 @@ const BlogContentComponent = ({ block }) => {
     return <p dangerouslySetInnerHTML={{ __html: data.text }}></p>;
   }
 
+
   //   validasi header h2 dan h3
   if (type === "header") {
     if (data.level === 3) {
@@ -88,6 +122,16 @@ const BlogContentComponent = ({ block }) => {
   if (type === "list") {
     return <List style={data.style} items={data.items} />;
   }
+
+  // Validasi kode(menggunakan PrismJS)
+  if (type === "code") {
+    return <Code language={data.language} code={data.code} />;
+  }
+
+
+
+
+  return null;
 };
 
 export default BlogContentComponent;

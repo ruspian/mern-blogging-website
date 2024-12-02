@@ -9,6 +9,8 @@ import Marker from "@editorjs/marker";
 import InlineCode from "@editorjs/inline-code";
 import axios from "axios";
 
+
+
 const uploadImageByFile = async (file) => {
   try {
     if (!file) {
@@ -65,7 +67,13 @@ export const tools = {
       },
     },
   },
-  code: Code,
+  code: {
+    class: Code,
+    inlineToolbar: true,
+    config: {
+      syntax: true,
+    },
+  },
   header: {
     class: Header,
     config: {
@@ -78,6 +86,12 @@ export const tools = {
     class: Quote,
     inlineToolbar: true,
   },
-  marker: Marker,
-  inlineCode: InlineCode,
+  marker: {
+    class: Marker,
+    inlineToolbar: true,
+  },
+  inlineCode: {
+    class: InlineCode,
+    inlineToolbar: true,
+  },
 };
